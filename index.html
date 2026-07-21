@@ -1,0 +1,1044 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeff Shull — Marketing Portfolio</title>
+<style>
+
+/* ── TOKENS ───────────────────────────────────────────── */
+:root {
+  --bg:        #f6f9f6;
+  --surface:   #ffffff;
+  --surface-2: #edf2ed;
+  --border:    #dce6dd;
+  --accent:    #00acf6;
+  --text:      #0c130e;
+  --muted:     #516355;
+  --dim:       #a8b8aa;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #0b0e0c;
+    --surface:   #121512;
+    --surface-2: #191d19;
+    --border:    #1e231e;
+    --accent:    #00acf6;
+    --text:      #ddeade;
+    --muted:     #6b7d6e;
+    --dim:       #3a3f3b;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg:        #0b0e0c;
+  --surface:   #121512;
+  --surface-2: #191d19;
+  --border:    #1e231e;
+  --accent:    #00acf6;
+  --text:      #ddeade;
+  --muted:     #6b7d6e;
+  --dim:       #3a3f3b;
+}
+
+:root[data-theme="light"] {
+  --bg:        #f6f9f6;
+  --surface:   #ffffff;
+  --surface-2: #edf2ed;
+  --border:    #dce6dd;
+  --accent:    #00acf6;
+  --text:      #0c130e;
+  --muted:     #516355;
+  --dim:       #a8b8aa;
+}
+
+/* ── RESET ────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── BASE ─────────────────────────────────────────────── */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── LAYOUT ───────────────────────────────────────────── */
+.wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* ── HEADER ───────────────────────────────────────────── */
+.site-header {
+  overflow: hidden;
+  position: relative;
+  min-height: 800px;
+  min-width: 900px
+}
+
+/* override .wrap centering so text sits left-anchored like reference */
+.site-header > .wrap {
+  max-width: none;
+  padding: 0;
+}
+
+.header-content {
+  position: relative;
+  z-index: 2;
+  max-width: 700px;
+  padding: 200px 0 56px 56px;
+}
+
+.header-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.header-name {
+  font-size: clamp(38px, 7vw, 64px);
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+  color: var(--text);
+  margin-bottom: 20px;
+  text-wrap: balance;
+}
+
+.header-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.header-tag {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 3px 10px;
+  border-radius: 2px;
+}
+
+.header-contact { font-size: 13px; color: var(--muted); }
+.header-contact a { color: var(--muted); text-decoration: none; }
+.header-contact a:hover { color: var(--accent); }
+
+/* ── HEADER PHOTO ─────────────────────────────────────── */
+.header-photo-slot {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  z-index: 0;
+}
+
+.header-photo-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  opacity: 0.5;
+}
+
+/* gradient: solid on left covering all text, photo bleeds in from right */
+.header-photo-slot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, var(--bg) 0%, var(--bg) 48%, transparent 68%),
+    linear-gradient(to top, rgba(0,0,0,0.2) 0%, transparent 25%);
+  pointer-events: none;
+}
+
+.header-photo-slot img[src=""] { display: none; }
+.header-photo-slot:has(img[src=""]) { display: none; }
+
+/* ── STAT TICKER ──────────────────────────────────────── */
+.stat-ticker {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 40px;
+  border: 1px solid var(--border);
+}
+
+.ticker-item {
+  flex: 1;
+  min-width: 120px;
+  padding: 20px 18px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.ticker-item:last-child { border-right: none; }
+
+.ticker-value {
+  display: block;
+  font-size: clamp(20px, 2.8vw, 28px);
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.ticker-label {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+/* ── MAIN ─────────────────────────────────────────────── */
+main { padding: 72px 0 80px; }
+
+/* ── ROLE ─────────────────────────────────────────────── */
+.role { margin-bottom: 80px; }
+
+/* ── ROLE HERO ────────────────────────────────────────── */
+/* full-bleed — lives outside .wrap, spans 100vw */
+.role-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 500px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.role-hero-bg {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  z-index: 0;
+}
+
+.role-hero-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.5;
+}
+
+/* when no image: collapse height, show text normally */
+.role-hero-bg img[src=""] { display: none; }
+.role-hero:has(.role-hero-bg img[src=""]) { min-height: 0; }
+
+/* dark gradient overlay when image present */
+.role-hero:has(.role-hero-bg img:not([src=""]))::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.1) 100%),
+    linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* text content — re-centers to match .wrap */
+.role-hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 56px 28px 112px;
+}
+
+/* cap the readable text column to left portion */
+.role-hero-content .role-meta,
+.role-hero-content .role-title,
+.role-hero-content .role-desc {
+  max-width: 560px;
+}
+
+/* text on dark overlay */
+.role-hero:has(.role-hero-bg img:not([src=""])) .role-company {
+  color: rgba(255, 255, 255, 0.6);
+}
+.role-hero:has(.role-hero-bg img:not([src=""])) .role-dates {
+  color: var(--accent);
+}
+.role-hero:has(.role-hero-bg img:not([src=""])) .role-title {
+  color: #ffffff;
+}
+.role-hero:has(.role-hero-bg img:not([src=""])) .role-desc {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0;
+}
+
+/* ── ROLE META ────────────────────────────────────────── */
+.role-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.role-company {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.role-dates {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.role-title {
+  font-size: clamp(22px, 3.5vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin-bottom: 14px;
+  text-wrap: balance;
+}
+
+.role-desc {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 680px;
+  line-height: 1.75;
+  margin-bottom: 0;
+}
+
+/* ── ROLE BODY ────────────────────────────────────────── */
+/* achievements + campaigns — always below the hero */
+.role-body {
+  padding: 36px 0 0 22px;
+  border-left: 2px solid var(--accent);
+}
+
+/* ── ACHIEVEMENTS ─────────────────────────────────────── */
+.section-hed {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.achievements {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.achievements li {
+  font-size: 13.5px;
+  color: var(--muted);
+  padding-left: 18px;
+  position: relative;
+  line-height: 1.65;
+}
+
+.achievements li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+/* ── CAMPAIGNS ────────────────────────────────────────── */
+.campaigns { margin-top: 44px; }
+
+.campaigns-hed {
+  font-size: clamp(22px, 3.5vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin-bottom: 14px;
+  text-wrap: balance;
+}
+
+.campaigns-hed::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── CAMPAIGN CARD ────────────────────────────────────── */
+.campaign {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  margin-bottom: 32px;
+  min-height: 200px;
+}
+
+.campaign-fig {
+  margin: 0;
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.campaign-fig img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.campaign-fig img[src=""] { display: none; }
+
+.campaign-fig:has(img[src=""])::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 1px dashed var(--dim);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.campaign-fig:has(img[src=""])::after {
+  content: 'Add Image';
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.campaign-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+.campaign-name { font-size: 15px; font-weight: 600; color: var(--text); }
+.campaign-stats { display: flex; flex-wrap: wrap; gap: 22px; }
+.cstat { display: flex; flex-direction: column; gap: 3px; }
+
+.campaign-brief { padding-top: 4px; border-top: 1px solid var(--border); }
+.campaign-brief-hed { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text); margin-bottom: 5px; }
+.campaign-brief-text { font-size: 13px; color: var(--muted); line-height: 1.65; }
+
+.cstat-val {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.cstat-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+
+/* ── PAID MEDIA GROUP ─────────────────────────────────── */
+.paid-group { border: 1px solid var(--border); background: var(--surface); margin-bottom: 8px; }
+
+.paid-group-hed {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.paid-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 20px;
+  align-items: center;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.paid-row:last-child { border-bottom: none; }
+.paid-channel { font-size: 13px; font-weight: 600; color: var(--text); }
+.paid-stats { display: flex; flex-wrap: wrap; gap: 22px; }
+
+/* ── OTHER FEATURED WORK ──────────────────────────────── */
+.featured-section { padding: 56px 0 80px; border-top: 2px solid var(--border); }
+
+.featured-hed {
+  font-size: clamp(22px, 3.5vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin-bottom: 48px;
+}
+
+.featured-sub { margin-bottom: 56px; }
+.featured-sub:last-child { margin-bottom: 0; }
+
+.featured-sub-hed {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.featured-sub-hed::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* CRM thumbnails */
+.crm-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+
+.crm-thumb {
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+  padding: 20px 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.2px;
+  transition: opacity 0.15s;
+  min-width: 220px;
+}
+.crm-thumb:hover { opacity: 0.85; }
+.crm-thumb-icon { font-size: 16px; opacity: 0.8; }
+
+/* Lightbox modal */
+.img-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.88);
+  overflow-y: auto;
+  padding: 40px 20px;
+}
+.img-modal.is-open { display: block; }
+
+.img-modal-inner {
+  position: relative;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.img-modal-close {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  transition: background 0.15s;
+}
+.img-modal-close:hover { background: rgba(255,255,255,0.28); }
+
+.img-modal-inner img {
+  width: 100%;
+  display: block;
+}
+
+/* YouTube embeds */
+.video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.video-wrap {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.video-wrap iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Blog image grid */
+.blog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.blog-grid img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 680px) {
+  .video-grid { grid-template-columns: 1fr; }
+  .blog-grid { grid-template-columns: repeat(2, 1fr); }
+  .crm-thumb { min-width: 0; width: 100%; }
+}
+
+/* ── FOOTER ───────────────────────────────────────────── */
+.site-footer { border-top: 1px solid var(--border); padding: 28px 0; }
+.site-footer p { font-size: 12px; color: var(--dim); }
+
+/* ── RESPONSIVE ───────────────────────────────────────── */
+@media (max-width: 680px) {
+  .header-content { padding: 40px 0 32px; max-width: 100%; }
+  .header-photo-slot::after { background: linear-gradient(to right, var(--bg) 0%, var(--bg) 20%, transparent 65%); }
+
+  .stat-ticker { flex-direction: column; }
+  .ticker-item { border-right: none; border-bottom: 1px solid var(--border); }
+  .ticker-item:last-child { border-bottom: none; }
+
+  .role-hero { min-height: 200px; }
+  .role-hero-content { padding: 32px 20px; }
+
+  .campaign { grid-template-columns: 1fr; }
+  .campaign-fig { height: 280px; border-right: none; border-bottom: 1px solid var(--border); }
+
+  .paid-row { grid-template-columns: 1fr; gap: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- HEADER ================================================= -->
+<header class="site-header">
+  <!-- To add photo: change src="" to src="images/me.png" -->
+  <figure class="header-photo-slot">
+    <img src="images/Me4.png" alt="Jeff Shull">
+  </figure>
+
+  <div class="wrap">
+    <div class="header-content">
+      <p class="header-eyebrow">Marketing Portfolio</p>
+      <h1 class="header-name">Jeff Shull</h1>
+      <div class="header-tags">
+        <span class="header-tag">Paid Media</span>
+        <span class="header-tag">SEO &amp; SEM</span>
+        <span class="header-tag">Social</span>
+        <span class="header-tag">Analytics</span>
+        <span class="header-tag">Content</span>
+      </div>
+      <p class="header-contact">
+        <a href="mailto:jeffshull0986@gmail.com">jeffshull0986@gmail.com</a>
+        &nbsp;·&nbsp; 832-289-2107
+        &nbsp;·&nbsp; San Francisco Bay Area
+      </p>
+      <div class="stat-ticker">
+        <div class="ticker-item"><span class="ticker-value">2M+</span><span class="ticker-label">Userbase on Repeat</span></div>
+        <div class="ticker-item"><span class="ticker-value">450K+</span><span class="ticker-label">Signups Tracked</span></div>
+        <div class="ticker-item"><span class="ticker-value">$1M</span><span class="ticker-label">Total Budget Managed</span></div>
+        <div class="ticker-item"><span class="ticker-value">$5–10</span><span class="ticker-label">Cost Per Acquisition</span></div>
+        <div class="ticker-item"><span class="ticker-value">Page 1</span><span class="ticker-label">Hundreds of Keyword Phrases</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN =================================================== -->
+<main>
+
+    <!-- ROLE 1 ─────────────────────────────────────────── -->
+    <section class="role">
+
+      <!-- HERO: image fills this block, text sits on top -->
+      <div class="role-hero">
+        <figure class="role-hero-bg">
+          <!-- To add background image: change src="" to src="images/role1-bg.jpg" -->
+          <img src="images/Rocket.png" alt="">
+        </figure>
+        <div class="role-hero-content">
+          <div class="role-meta">
+            <span class="role-company">PlayStation Esports / Repeat</span>
+            <span class="role-dates">Jun 2025 — Present</span>
+          </div>
+          <h2 class="role-title">Marketing Operations Manager</h2>
+          <p class="role-desc">
+            Lead Marketing Operations for all programs and campaigns for Repeat.gg, a subsidiary of PlayStation Esports. Work closely with Global Marketing director on campaign design & strategy, then lead the execution of all green lit campaigns. Own the channel & execution strategy, project management, and post-campaign analysis. Also lead retention programs such as always-on tournament programming, marketing, and player retention.
+          </p>
+        </div>
+      </div>
+
+      <div class="wrap">
+      <div class="role-body">
+        <p class="section-hed">Key Achievements</p>
+        <ul class="achievements">
+          <li>Built JIRA automation workflows and SOPs that cut campaign ship times by 50%.</li>
+          <li>Built a tournament engagement analytics dashboard and introduced audience-first strategies producing a 15% MoM increase in player engagement.</li>
+          <li>Developed a proprietary influencer analytics dashboard from scratch that identified cost inefficiencies and reduced cost per acquisition by 20%.</li>
+          <li>Improved Trustpilot scores from 2.7★ to 4.1★ via new communication SOPs and a structured retention program.</li>
+        </ul>
+
+        <div class="campaigns">
+          <p class="campaigns-hed">Campaigns</p>
+
+          <article class="campaign">
+            <figure class="campaign-fig">
+              <!-- To add image: change src="" to src="images/monthly-cash-cups.jpg" -->
+              <img src="images/CashCup.png" alt="Monthly Cash Cups Rocket League campaign creative">
+            </figure>
+            <div class="campaign-body">
+              <div class="campaign-name">Monthly Cash Cups — Rocket League</div>
+              <div class="campaign-stats">
+                <div class="cstat"><span class="cstat-val">15.0M</span><span class="cstat-lbl">Impressions</span></div>
+                <div class="cstat"><span class="cstat-val">677,000</span><span class="cstat-lbl">Tournament Entries</span></div>
+                <div class="cstat"><span class="cstat-val">12M</span><span class="cstat-lbl">Matches Played</span></div>
+              </div>
+              <div class="campaign-brief">
+                <p class="campaign-brief-hed">Brief</p>
+                <p class="campaign-brief-text">Took over in-game tournament offering for Epic Games in 2026. Surpassed their tournament entries from 2025 in one weekend.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="campaign">
+            <figure class="campaign-fig">
+              <!-- To add image: change src="" to src="images/ewc-victory-series.jpg" -->
+              <img src="images/EWC.png" alt="Esports World Cup Viewers Victory Series campaign creative">
+            </figure>
+            <div class="campaign-body">
+              <div class="campaign-name">Esports World Cup Viewers' Victory Series</div>
+              <div class="campaign-stats">
+                <div class="cstat"><span class="cstat-val">11.2M</span><span class="cstat-lbl">Impressions</span></div>
+                <div class="cstat"><span class="cstat-val">47,000</span><span class="cstat-lbl">Tournament Entries</span></div>
+                <div class="cstat"><span class="cstat-val">5,000</span><span class="cstat-lbl">New Accounts</span></div>
+              </div>
+              <div class="campaign-brief">
+                <p class="campaign-brief-hed">Brief</p>
+                <p class="campaign-brief-text">Partnered with Esports World Cup for unique "golden ticket" raffle, i.e. Charlie &amp; the Chocolate Factory type prizing.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="campaign">
+            <figure class="campaign-fig">
+              <!-- To add image: change src="" to src="images/courage-symfuhny-cups.jpg" -->
+              <img src="images/Courage.png" alt="CourageJD and Symfuhny Cups campaign creative">
+            </figure>
+            <div class="campaign-body">
+              <div class="campaign-name">CourageJD &amp; Symfuhny Cups</div>
+              <div class="campaign-stats">
+                <div class="cstat"><span class="cstat-val">5.0M</span><span class="cstat-lbl">Impressions</span></div>
+                <div class="cstat"><span class="cstat-val">30,000</span><span class="cstat-lbl">Tournament Entries</span></div>
+                <div class="cstat"><span class="cstat-val">1.5M</span><span class="cstat-lbl">Influencer Video Views</span></div>
+              </div>
+              <div class="campaign-brief">
+                <p class="campaign-brief-hed">Brief</p>
+                <p class="campaign-brief-text">Partnered with two of the largest streamers as part of an on-going series of Influencer-led tournaments.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="campaign">
+            <figure class="campaign-fig">
+              <!-- To add image: change src="" to src="images/season14-launch.jpg" -->
+              <img src="images/S14LaunchCup.png" alt="Season 14 Launch campaign creative">
+            </figure>
+            <div class="campaign-body">
+              <div class="campaign-name">Season 14 Launch</div>
+              <div class="campaign-stats">
+                <div class="cstat"><span class="cstat-val">2.8M</span><span class="cstat-lbl">Impressions</span></div>
+                <div class="cstat"><span class="cstat-val">20,000</span><span class="cstat-lbl">Tournament Entries</span></div>
+                <div class="cstat"><span class="cstat-val">10,500</span><span class="cstat-lbl">New Accounts</span></div>
+              </div>
+              <div class="campaign-brief">
+                <p class="campaign-brief-hed">Brief</p>
+                <p class="campaign-brief-text">Collaborated with Rocket League to promote Season 14 and RLCS together on Repeat.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="campaign">
+            <figure class="campaign-fig">
+              <!-- To add image: change src="" to src="images/repeat-rivalries.jpg" -->
+              <img src="images/RepeatRivalries.png" alt="Repeat Rivalries campaign creative">
+            </figure>
+            <div class="campaign-body">
+              <div class="campaign-name">Repeat Rivalries</div>
+              <div class="campaign-stats">
+                <div class="cstat"><span class="cstat-val">1.3M</span><span class="cstat-lbl">Impressions</span></div>
+                <div class="cstat"><span class="cstat-val">41,500</span><span class="cstat-lbl">Tournament Entries</span></div>
+                <div class="cstat"><span class="cstat-val">7,500</span><span class="cstat-lbl">New Accounts</span></div>
+              </div>
+              <div class="campaign-brief">
+                <p class="campaign-brief-hed">Brief</p>
+                <p class="campaign-brief-text">Tapped into Creator competitiveness to generate organic (aka free) deliverables...and it worked.</p>
+              </div>
+            </div>
+          </article>
+
+          <div class="paid-group">
+            <div class="paid-group-hed">Paid Media</div>
+            <div class="paid-row">
+              <div class="paid-channel">Google Search</div>
+              <div class="paid-stats">
+                <div class="cstat"><span class="cstat-val">$500K</span><span class="cstat-lbl">Spend</span></div>
+                <div class="cstat"><span class="cstat-val">170,000</span><span class="cstat-lbl">New Accounts</span></div>
+                <div class="cstat"><span class="cstat-val">$3</span><span class="cstat-lbl">Avg CPA</span></div>
+                <div class="cstat"><span class="cstat-val">800,000</span><span class="cstat-lbl">Entries</span></div>
+                <div class="cstat"><span class="cstat-val">$0.65</span><span class="cstat-lbl">Cost / Action</span></div>
+              </div>
+            </div>
+            <div class="paid-row">
+              <div class="paid-channel">Meta Ads</div>
+              <div class="paid-stats">
+                <div class="cstat"><span class="cstat-val">$230K</span><span class="cstat-lbl">Spend</span></div>
+                <div class="cstat"><span class="cstat-val">20,000</span><span class="cstat-lbl">New Accounts</span></div>
+                <div class="cstat"><span class="cstat-val">$11</span><span class="cstat-lbl">Avg CPA</span></div>
+		<div class="cstat"><span class="cstat-val">50,000</span><span class="cstat-lbl">Entries</span></div>
+                <div class="cstat"><span class="cstat-val">$4.6</span><span class="cstat-lbl">Cost / Action</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- ROLE 2 ─────────────────────────────────────────── -->
+    <section class="role">
+
+      <div class="role-hero">
+        <figure class="role-hero-bg">
+          <!-- To add background image: change src="" to src="images/role2-bg.jpg" -->
+          <img src="images/COD.png" alt="">
+        </figure>
+        <div class="role-hero-content">
+          <div class="role-meta">
+            <span class="role-company">PlayStation Esports / Repeat</span>
+            <span class="role-dates">Oct 2019 — Jun 2025</span>
+          </div>
+          <h2 class="role-title">Digital Marketing &amp; Growth Manager</h2>
+          <p class="role-desc">
+            Led all digital marketing and growth initiatives that helped scale Repeat from 150K to 2M+ users. Built the data infrastructure, influencer programs, content engine, and community systems that powered sustained growth across social, paid media, SEO, email, and Discord.
+          </p>
+        </div>
+      </div>
+
+      <div class="wrap">
+      <div class="role-body">
+        <p class="section-hed">Key Achievements</p>
+        <ul class="achievements">
+          <li>Led influencer-sponsored tournaments driving 300,000+ new account signups</li>
+          <li>Executed evergreen SEO strategy ranking Repeat #1 on Google for target keywords, surpassing the dictionary definition of "Repeat" and securing page-one placement for all major game titles.</li>
+          <li>Developed email strategy improving open rates from 8% to 25% and increasing user retention by 10%.</li>
+          <li>Grew Discord from 10K to 65K+ members</li>
+          <li>Built automated reporting dashboards and data pipelines to surface executive-level marketing insights.</li>
+        </ul>
+
+        <div class="campaigns">
+          <p class="campaigns-hed">Campaigns</p>
+
+          <article class="campaign">
+            <figure class="campaign-fig">
+              <!-- To add image: change src="" to src="images/huskerrs-warzone.jpg" -->
+              <img src="images/Huskerrs.png" alt="Huskerrs Warzone Invitational campaign creative">
+            </figure>
+            <div class="campaign-body">
+              <div class="campaign-name">Huskerrs Warzone Invitational</div>
+              <div class="campaign-stats">
+                <div class="cstat"><span class="cstat-val">21.2M</span><span class="cstat-lbl">Impressions</span></div>
+                <div class="cstat"><span class="cstat-val">120,000</span><span class="cstat-lbl">Tournament Entries</span></div>
+                <div class="cstat"><span class="cstat-val">230,000</span><span class="cstat-lbl">Stream Hours Watched</span></div>
+              </div>
+              <div class="campaign-brief">
+                <p class="campaign-brief-hed">Brief</p>
+                <p class="campaign-brief-text">Chose a "Hero" influencer to launch Warzone tournaments, and they recruited others to join the large scale streaming campaign.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="campaign">
+            <figure class="campaign-fig">
+              <!-- To add image: change src="" to src="images/gfuel-cup.jpg" -->
+              <img src="images/Gfuel.png" alt="GFuel Cup campaign creative">
+            </figure>
+            <div class="campaign-body">
+              <div class="campaign-name">GFuel Cup</div>
+              <div class="campaign-stats">
+                <div class="cstat"><span class="cstat-val">11.0M</span><span class="cstat-lbl">Impressions</span></div>
+                <div class="cstat"><span class="cstat-val">14,000</span><span class="cstat-lbl">Tournament Entries</span></div>
+                <div class="cstat"><span class="cstat-val">$150,000</span><span class="cstat-lbl">Revenue (code KNG)</span></div>
+              </div>
+              <div class="campaign-brief">
+                <p class="campaign-brief-hed">Brief</p>
+                <p class="campaign-brief-text">Launched Fortnite Tournaments on Repeat with Team KNG &amp; GFuel.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="campaign">
+            <figure class="campaign-fig">
+              <!-- To add image: change src="" to src="images/tribe-gaming-brawl-stars.jpg" -->
+              <img src="images/Tribe.png" alt="Tribe Gaming Brawl Stars campaign creative">
+            </figure>
+            <div class="campaign-body">
+              <div class="campaign-name">Tribe Gaming New Year's Eve Launch</div>
+              <div class="campaign-stats">
+                <div class="cstat"><span class="cstat-val">3.6M</span><span class="cstat-lbl">Impressions</span></div>
+                <div class="cstat"><span class="cstat-val">20,000</span><span class="cstat-lbl">Tournament Entries</span></div>
+                <div class="cstat"><span class="cstat-val">15,000</span><span class="cstat-lbl">New Accounts</span></div>
+              </div>
+              <div class="campaign-brief">
+                <p class="campaign-brief-hed">Brief</p>
+                <p class="campaign-brief-text">Launched Brawl Stars tournaments on Repeat with Tribe Gaming — biggest pro team in the world.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="campaign">
+            <figure class="campaign-fig">
+              <!-- To add image: change src="" to src="images/papa-johns.jpg" -->
+              <img src="images/PapaJohns.png" alt="Papa Johns campaign creative">
+            </figure>
+            <div class="campaign-body">
+              <div class="campaign-name">Papa John's Fortnite Cup</div>
+              <div class="campaign-stats">
+                <div class="cstat"><span class="cstat-val">3.0M</span><span class="cstat-lbl">Impressions</span></div>
+                <div class="cstat"><span class="cstat-val">43,000</span><span class="cstat-lbl">Tournament Entries</span></div>
+                <div class="cstat"><span class="cstat-val">$75,000</span><span class="cstat-lbl">Revenue (code Repeat25)</span></div>
+              </div>
+              <div class="campaign-brief">
+                <p class="campaign-brief-hed">Brief</p>
+                <p class="campaign-brief-text">Fortnite tournament with a goal to drive pizza orders.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="campaign">
+            <figure class="campaign-fig">
+              <!-- To add image: change src="" to src="images/carry-tax-invitational.jpg" -->
+              <img src="images/Cti.png" alt="Carry Team Invitational campaign creative">
+            </figure>
+            <div class="campaign-body">
+              <div class="campaign-name">Carry Team Invitational</div>
+              <div class="campaign-stats">
+                <div class="cstat"><span class="cstat-val">900K</span><span class="cstat-lbl">Impressions</span></div>
+                <div class="cstat"><span class="cstat-val">5,400</span><span class="cstat-lbl">Tournament Entries</span></div>
+                <div class="cstat"><span class="cstat-val">40,000</span><span class="cstat-lbl">Hours Watched</span></div>
+              </div>
+              <div class="campaign-brief">
+                <p class="campaign-brief-hed">Brief</p>
+                <p class="campaign-brief-text">Pro-Am style tournament broadcasted on Twitch where amateurs would get paid upwards of $3,000 for one day.</p>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+      </div>
+    </section>
+
+</main>
+
+<!-- OTHER FEATURED WORK ==================================== -->
+<section class="featured-section">
+  <div class="wrap">
+    <h2 class="featured-hed">Other Featured Work</h2>
+
+    <!-- CRM ------------------------------------------------ -->
+    <div class="featured-sub">
+      <p class="featured-sub-hed">CRM</p>
+      <div class="crm-grid">
+        <button class="crm-thumb" onclick="document.getElementById('modal-rivalries').classList.add('is-open')">
+          <span>Repeat Rivalries Email</span>
+          <span class="crm-thumb-icon">↗</span>
+        </button>
+        <button class="crm-thumb" onclick="document.getElementById('modal-optic').classList.add('is-open')">
+          <span>Optic Cup Email</span>
+          <span class="crm-thumb-icon">↗</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Explainer Videos ----------------------------------- -->
+    <div class="featured-sub">
+      <p class="featured-sub-hed">Explainer Videos</p>
+      <div class="video-grid">
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/ng2RGp_GvR4" title="Explainer Video 1" allowfullscreen></iframe>
+        </div>
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/af9yn4YXqy4" title="Explainer Video 2" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blogs ---------------------------------------------- -->
+    <div class="featured-sub">
+      <p class="featured-sub-hed">Blogs</p>
+      <div class="blog-grid">
+        <img src="images/RepeatAcquired.png" alt="Repeat Acquired blog">
+        <img src="images/EWCBlog.png" alt="EWC Blog">
+        <img src="images/MatchmakingLeaderboardsBeta.png" alt="Matchmaking Leaderboards Beta blog">
+        <img src="images/RepeatHolidayBlog.png" alt="Repeat Holiday Blog">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Lightbox modals -->
+<div id="modal-rivalries" class="img-modal" onclick="if(event.target===this)this.classList.remove('is-open')">
+  <div class="img-modal-inner">
+    <button class="img-modal-close" onclick="document.getElementById('modal-rivalries').classList.remove('is-open')">✕</button>
+    <img src="images/RepeatRivalriesEmail.png" alt="Repeat Rivalries Email">
+  </div>
+</div>
+
+<div id="modal-optic" class="img-modal" onclick="if(event.target===this)this.classList.remove('is-open')">
+  <div class="img-modal-inner">
+    <button class="img-modal-close" onclick="document.getElementById('modal-optic').classList.remove('is-open')">✕</button>
+    <img src="images/OpticEmail.png" alt="Optic Cup Email">
+  </div>
+</div>
+
+<script>
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.img-modal.is-open').forEach(function(m) {
+      m.classList.remove('is-open');
+    });
+  }
+});
+</script>
+
+<!-- FOOTER ================================================= -->
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Jeff Shull &nbsp;·&nbsp; Marketing Portfolio &nbsp;·&nbsp; <a href="mailto:jeffshull0986@gmail.com" style="color:inherit;text-decoration:none;">jeffshull0986@gmail.com</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
