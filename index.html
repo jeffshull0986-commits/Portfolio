@@ -499,26 +499,27 @@ main { padding: 72px 0 80px; }
 .featured-sub-hed::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
 /* CRM thumbnails */
-.crm-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+.crm-grid { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
 
 .crm-thumb {
-  background: var(--accent);
-  border: none;
+  background: transparent;
+  border: 2px solid var(--accent);
   cursor: pointer;
   padding: 20px 28px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   font-family: inherit;
   font-size: 14px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--accent);
   letter-spacing: 0.2px;
-  transition: opacity 0.15s;
+  transition: background 0.18s, color 0.18s;
   min-width: 220px;
 }
-.crm-thumb:hover { opacity: 0.85; }
-.crm-thumb-icon { font-size: 16px; opacity: 0.8; }
+.crm-thumb:hover { background: var(--accent); color: #ffffff; }
+.crm-thumb-icon { font-size: 16px; }
 
 /* Lightbox modal */
 .img-modal {
@@ -637,7 +638,7 @@ main { padding: 72px 0 80px; }
   /* Featured work */
   .video-grid { grid-template-columns: 1fr; }
   .blog-grid { grid-template-columns: 1fr; }
-  .crm-thumb { min-width: 0; width: 100%; }
+  .crm-thumb { min-width: 0; width: 100%; background: var(--accent); color: #ffffff; }
 }
 
 @media (prefers-reduced-motion: reduce) {
