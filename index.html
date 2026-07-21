@@ -77,7 +77,7 @@ body {
 .site-header {
   overflow: hidden;
   position: relative;
-  min-height: 800px;
+  min-height: 1000px;
 }
 
 /* override .wrap centering so text sits left-anchored like reference */
@@ -157,7 +157,7 @@ body {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(to right, var(--bg) 0%, var(--bg) 48%, transparent 68%),
+    linear-gradient(to right, var(--bg) 0%, var(--bg) 25%, transparent 68%),
     linear-gradient(to top, rgba(0,0,0,0.2) 0%, transparent 25%);
   pointer-events: none;
 }
@@ -498,6 +498,14 @@ main { padding: 72px 0 80px; }
 }
 .featured-sub-hed::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
+.featured-sub-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.75;
+  max-width: 680px;
+  margin-bottom: 20px;
+}
+
 /* CRM thumbnails */
 .crm-grid { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
 
@@ -653,7 +661,7 @@ main { padding: 72px 0 80px; }
 <header class="site-header">
   <!-- To add photo: change src="" to src="images/me.png" -->
   <figure class="header-photo-slot">
-    <img src="images/Me4.png" alt="Jeff Shull">
+    <img src="images/Me6.png" alt="Jeff Shull">
   </figure>
 
   <div class="wrap">
@@ -988,6 +996,7 @@ main { padding: 72px 0 80px; }
     <!-- CRM ------------------------------------------------ -->
     <div class="featured-sub">
       <p class="featured-sub-hed">CRM</p>
+      <p class="featured-sub-desc">Revamped strategy for customer communication with targeted emails for different audiences which improved Open Rates by 15-20% on average. Updated the look and feel of emails which improved CTR% by 10%.</p>
       <div class="crm-grid">
         <button class="crm-thumb" onclick="document.getElementById('modal-rivalries').classList.add('is-open')">
           <span>Repeat Rivalries Email</span>
@@ -1003,6 +1012,7 @@ main { padding: 72px 0 80px; }
     <!-- Explainer Videos ----------------------------------- -->
     <div class="featured-sub">
       <p class="featured-sub-hed">Explainer Videos</p>
+      <p class="featured-sub-desc">Alleviated customer questions by adding explainer videos which lived on the website on every tournament page and in the customer support knowledge base.</p>
       <div class="video-grid">
         <div class="video-wrap">
           <iframe src="https://www.youtube.com/embed/ng2RGp_GvR4" title="Explainer Video 1" allowfullscreen></iframe>
@@ -1016,6 +1026,7 @@ main { padding: 72px 0 80px; }
     <!-- Blogs ---------------------------------------------- -->
     <div class="featured-sub">
       <p class="featured-sub-hed">Blogs</p>
+      <p class="featured-sub-desc">Used blogs to promote major company news, marketing campaigns, new features, and added evergreen content to support SEO strategy.</p>
       <div class="blog-grid">
         <img src="images/RepeatAcquired.png" alt="Repeat Acquired blog">
         <img src="images/EWCBlog.png" alt="EWC Blog">
