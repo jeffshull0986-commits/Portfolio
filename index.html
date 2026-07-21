@@ -78,7 +78,6 @@ body {
   overflow: hidden;
   position: relative;
   min-height: 800px;
-  min-width: 900px
 }
 
 /* override .wrap centering so text sits left-anchored like reference */
@@ -595,32 +594,50 @@ main { padding: 72px 0 80px; }
   border: 1px solid var(--border);
 }
 
-@media (max-width: 680px) {
-  .video-grid { grid-template-columns: 1fr; }
-  .blog-grid { grid-template-columns: repeat(2, 1fr); }
-  .crm-thumb { min-width: 0; width: 100%; }
-}
-
 /* ── FOOTER ───────────────────────────────────────────── */
 .site-footer { border-top: 1px solid var(--border); padding: 28px 0; }
 .site-footer p { font-size: 12px; color: var(--dim); }
 
 /* ── RESPONSIVE ───────────────────────────────────────── */
 @media (max-width: 680px) {
-  .header-content { padding: 40px 0 32px; max-width: 100%; }
-  .header-photo-slot::after { background: linear-gradient(to right, var(--bg) 0%, var(--bg) 20%, transparent 65%); }
+  /* Header */
+  .site-header { min-height: 480px; }
+  .site-header > .wrap { padding: 0; }
+  .header-content { padding: 48px 20px 40px; max-width: 100%; }
 
-  .stat-ticker { flex-direction: column; }
+  /* On mobile the photo spans full-bleed behind text — use a dark overall overlay */
+  .header-photo-slot::after {
+    background:
+      linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.55) 100%),
+      linear-gradient(to right, var(--bg) 0%, transparent 100%);
+  }
+
+  /* Force text colors to be readable over the photo */
+  .header-name { color: #ffffff; }
+  .header-contact,
+  .header-contact a { color: rgba(255,255,255,0.75); }
+  .header-tag { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.25); }
+
+  /* Stat ticker */
+  .stat-ticker { flex-direction: column; margin-top: 24px; }
   .ticker-item { border-right: none; border-bottom: 1px solid var(--border); }
   .ticker-item:last-child { border-bottom: none; }
 
+  /* Role hero */
   .role-hero { min-height: 200px; }
-  .role-hero-content { padding: 32px 20px; }
+  .role-hero-content { padding: 32px 20px 48px; }
 
+  /* Campaign cards */
   .campaign { grid-template-columns: 1fr; }
-  .campaign-fig { height: 280px; border-right: none; border-bottom: 1px solid var(--border); }
+  .campaign-fig { height: 220px; border-right: none; border-bottom: 1px solid var(--border); }
 
+  /* Paid media */
   .paid-row { grid-template-columns: 1fr; gap: 10px; }
+
+  /* Featured work */
+  .video-grid { grid-template-columns: 1fr; }
+  .blog-grid { grid-template-columns: 1fr; }
+  .crm-thumb { min-width: 0; width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
