@@ -355,13 +355,39 @@ footer .foot-links{
 
 @media (max-width:720px){
   .wrap{padding:0 20px;}
-  .hero h1{font-size:30px;}
-  .section-head{flex-direction:column;gap:16px;}
-  .section-head h2{max-width:none;}
+
+  /* Header */
+  .header-row{flex-direction:column;align-items:flex-start;gap:8px;}
+
+  /* Hero */
+  .hero{padding:36px 0 24px;}
+  .hero h1{font-size:28px;}
+  .hero-sub{font-size:16px;}
+  .hero-meta{flex-wrap:wrap;gap:16px;}
+
+  /* Sections */
+  section{padding:36px 0;}
+  .section-head{flex-direction:column;gap:12px;}
+  .section-head h2{max-width:none;font-size:22px;}
+  .section-body{font-size:15px;}
+
+  /* Insight cards */
   .insight-grid{grid-template-columns:1fr;}
-  .hero-meta{flex-wrap:wrap;gap:20px;}
-  .impact blockquote{font-size:21px;}
-  footer{flex-direction:column;align-items:flex-start;gap:14px;}
+
+  /* Impact */
+  .impact{padding:36px 0;}
+  .impact blockquote{font-size:19px;}
+
+  /* Formula block */
+  .formula-block{font-size:11.5px;padding:14px 14px;}
+
+  /* Back CTA */
+  .back-cta-wrap{padding:32px 0 40px;}
+  .back-cta{width:100%;justify-content:center;}
+
+  /* Footer */
+  footer{flex-direction:column;align-items:flex-start;gap:14px;padding:32px 0 40px;}
+  footer .foot-links{text-align:left;}
 }
 
 .back-cta-wrap {
