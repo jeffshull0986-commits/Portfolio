@@ -1024,6 +1024,14 @@ main { padding: 72px 0 80px; }
           <span>Optic Cup Email</span>
           <span class="crm-thumb-icon">↗</span>
         </button>
+        <button class="crm-thumb" onclick="document.getElementById('modal-bf6').classList.add('is-open')">
+          <span>Battlefield 6 Update</span>
+          <span class="crm-thumb-icon">↗</span>
+        </button>
+        <button class="crm-thumb" onclick="document.getElementById('modal-rl-prize').classList.add('is-open')">
+          <span>Rocket League Prize Delivery</span>
+          <span class="crm-thumb-icon">↗</span>
+        </button>
       </div>
     </div>
 
@@ -1067,6 +1075,20 @@ main { padding: 72px 0 80px; }
   <div class="img-modal-inner">
     <button class="img-modal-close" onclick="document.getElementById('modal-optic').classList.remove('is-open')">✕</button>
     <img src="images/OpticEmail.png" alt="Optic Cup Email">
+  </div>
+</div>
+
+<div id="modal-bf6" class="img-modal" onclick="if(event.target===this)this.classList.remove('is-open')">
+  <div class="img-modal-inner">
+    <button class="img-modal-close" onclick="document.getElementById('modal-bf6').classList.remove('is-open')">✕</button>
+    <img src="images/CashCupCodesEmail.png" alt="Battlefield 6 Update Email">
+  </div>
+</div>
+
+<div id="modal-rl-prize" class="img-modal" onclick="if(event.target===this)this.classList.remove('is-open')">
+  <div class="img-modal-inner">
+    <button class="img-modal-close" onclick="document.getElementById('modal-rl-prize').classList.remove('is-open')">✕</button>
+    <img src="images/CashCupCodesEmail.png" alt="Rocket League Prize Delivery Email">
   </div>
 </div>
 

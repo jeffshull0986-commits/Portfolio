@@ -363,6 +363,29 @@ footer .foot-links{
   .impact blockquote{font-size:21px;}
   footer{flex-direction:column;align-items:flex-start;gap:14px;}
 }
+
+.back-cta-wrap {
+  text-align: center;
+  padding: 48px 0 56px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  margin-top: 48px;
+}
+.back-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.18s, color 0.18s;
+}
+.back-cta:hover { background: var(--accent); color: #0A0D12; }
 </style>
 </head>
 <body>
@@ -511,6 +534,10 @@ footer .foot-links{
   <div class="foot-links">
     jeffshull.com<br>
   </div>
+
+<div class="back-cta-wrap">
+  <a class="back-cta" href="https://jeffshull.com">&larr; Back to Portfolio</a>
+</div>
 </footer>
 
 </div>
