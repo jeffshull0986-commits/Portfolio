@@ -134,6 +134,23 @@ body {
 .header-contact a { color: var(--muted); text-decoration: none; }
 .header-contact a:hover { color: var(--accent); }
 
+.header-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 10px 20px;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.18s, color 0.18s;
+}
+.header-cta:hover { background: var(--accent); color: #ffffff; }
+
 /* ── HEADER PHOTO ─────────────────────────────────────── */
 .header-photo-slot {
   position: absolute;
@@ -680,6 +697,7 @@ main { padding: 72px 0 80px; }
         &nbsp;·&nbsp; 832-289-2107
         &nbsp;·&nbsp; San Francisco Bay Area
       </p>
+      <a class="header-cta" href="case-study-marketing-dashboard.html">Case Study: Marketing Dashboard &rarr;</a>
       <div class="stat-ticker">
         <div class="ticker-item"><span class="ticker-value">2M+</span><span class="ticker-label">Userbase on Repeat</span></div>
         <div class="ticker-item"><span class="ticker-value">500K+</span><span class="ticker-label">Signups Tracked</span></div>
@@ -738,7 +756,7 @@ main { padding: 72px 0 80px; }
               <div class="campaign-stats">
                 <div class="cstat"><span class="cstat-val">15.0M</span><span class="cstat-lbl">Impressions</span></div>
                 <div class="cstat"><span class="cstat-val">677,000</span><span class="cstat-lbl">Tournament Entries</span></div>
-                <div class="cstat"><span class="cstat-val">12M</span><span class="cstat-lbl">Matches Played</span></div>
+                <div class="cstat"><span class="cstat-val">12.0M</span><span class="cstat-lbl">Matches Played</span></div>
               </div>
               <div class="campaign-brief">
                 <p class="campaign-brief-hed">Brief</p>
