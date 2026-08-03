@@ -620,6 +620,57 @@ main { padding: 72px 0 80px; }
   border: 1px solid var(--border);
 }
 
+/* ── ANCHOR NAV ───────────────────────────────────────── */
+.header-anchors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.header-anchors a {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  padding: 9px 18px;
+  transition: color 0.18s, border-color 0.18s;
+}
+.header-anchors a:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ── PROFILE / WHO I AM ───────────────────────────────── */
+.profile-section {
+  padding: 72px 0 80px;
+  border-top: 1px solid var(--border);
+}
+
+.profile-block { margin-bottom: 48px; }
+.profile-block:last-child { margin-bottom: 0; }
+
+.profile-hed {
+  font-size: clamp(22px, 3.5vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+.profile-block p {
+  font-size: 16px;
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 680px;
+  margin-bottom: 16px;
+}
+.profile-block p:last-child { margin-bottom: 0; }
+
+/* smooth anchor jumps with a little breathing room at the target */
+html { scroll-behavior: smooth; }
+[id] { scroll-margin-top: 24px; }
+
 /* ── FOOTER ───────────────────────────────────────────── */
 .site-footer { border-top: 1px solid var(--border); padding: 28px 0; }
 .site-footer p { font-size: 12px; color: var(--dim); }
@@ -643,6 +694,14 @@ main { padding: 72px 0 80px; }
   .header-contact,
   .header-contact a { color: rgba(255,255,255,0.75); }
   .header-tag { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.25); }
+  .header-anchors a { color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.35); }
+
+  /* Anchor nav + profile */
+  .header-anchors { gap: 8px; }
+  .header-anchors a { padding: 9px 14px; font-size: 10.5px; }
+  .profile-section { padding: 48px 0 56px; }
+  .profile-block { margin-bottom: 36px; }
+  .profile-block p { font-size: 15px; }
 
   /* Stat ticker */
   .stat-ticker { flex-direction: column; margin-top: 24px; }
@@ -668,6 +727,7 @@ main { padding: 72px 0 80px; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+  html { scroll-behavior: auto; }
 }
 
 </style>
@@ -705,15 +765,40 @@ main { padding: 72px 0 80px; }
         <div class="ticker-item"><span class="ticker-value">$5–10</span><span class="ticker-label">Cost Per Acquisition</span></div>
         <div class="ticker-item"><span class="ticker-value">Page 1</span><span class="ticker-label">Hundreds of Keyword Phrases</span></div>
       </div>
+      <nav class="header-anchors">
+        <a href="#meet-jeff">Meet Jeff</a>
+        <a href="#experience">My Experience</a>
+        <a href="#other-work">Other Work</a>
+      </nav>
     </div>
   </div>
 </header>
+
+<!-- PROFILE ================================================ -->
+<section class="profile-section" id="meet-jeff">
+  <div class="wrap">
+
+    <div class="profile-block">
+      <h2 class="profile-hed">Who I Am</h2>
+      <p>I live to solve problems. Hand me a dataset and a hard question, and I'll dig until I find the pattern and deliver the solution.</p>
+      <p>I've spent most of my career at startups, where tight deadlines and high pressure came standard. The last four years I've worked corporate, and I've seen how the benefit of that structure can help.</p>
+      <p>When something needs to get done, people come to me. I'll pick up new software mid-project if that's what it takes.</p>
+    </div>
+
+    <div class="profile-block">
+      <h2 class="profile-hed">What I Believe</h2>
+      <p>Data tells the truth. I built my career on trusting it: doubling down on what works, then getting creative about what could work next.</p>
+      <p>I earned my current role by knowing the product better than anyone on the team. I know what success looks like for every marketing tactic we run because I ran it myself first.</p>
+    </div>
+
+  </div>
+</section>
 
 <!-- MAIN =================================================== -->
 <main>
 
     <!-- ROLE 1 ─────────────────────────────────────────── -->
-    <section class="role">
+    <section class="role" id="experience">
 
       <!-- HERO: image fills this block, text sits on top -->
       <div class="role-hero">
@@ -1005,7 +1090,7 @@ main { padding: 72px 0 80px; }
 </main>
 
 <!-- OTHER FEATURED WORK ==================================== -->
-<section class="featured-section">
+<section class="featured-section" id="other-work">
   <div class="wrap">
     <h2 class="featured-hed">Other Featured Work</h2>
 
