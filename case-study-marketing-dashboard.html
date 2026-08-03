@@ -20,7 +20,7 @@
 }
 
 *{box-sizing:border-box;}
-html,body{margin:0;padding:0;overflow-x:hidden;}
+html,body{margin:0;padding:0;}
 body{
   background:var(--paper);
   color:var(--ink);
@@ -373,11 +373,14 @@ footer .foot-links{
   .hero-sub{font-size:16px;}
   .hero-meta{flex-wrap:wrap;gap:16px;}
 
-  /* Sections */
+  /* Sections
+     align-items:stretch is required here: in a column flex container the cross
+     axis is horizontal, so the inherited flex-start would size children to
+     their content width and let the formula block push the page wide. */
   section{padding:36px 0;}
-  .section-head{flex-direction:column;gap:12px;}
+  .section-head{flex-direction:column;gap:12px;align-items:stretch;}
   .section-head h2{max-width:none;font-size:22px;}
-  .section-body{font-size:15px;}
+  .section-body{font-size:15px;width:100%;max-width:100%;}
 
   /* Insight cards */
   .insight-grid{grid-template-columns:1fr;}
@@ -386,8 +389,15 @@ footer .foot-links{
   .impact{padding:36px 0;}
   .impact blockquote{font-size:19px;}
 
-  /* Formula block — long QUERY strings scroll horizontally on their own */
-  .formula-block{font-size:11px;padding:14px;line-height:1.7;}
+  /* Formula block — tokens like SUM(D),SUM(E),... have no spaces to break on,
+     so force wrapping rather than relying on horizontal scroll */
+  .formula-block{
+    font-size:11px;
+    padding:14px;
+    line-height:1.7;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
 
   /* Sheet frames */
   .sheet-frame{margin:28px 0;}
