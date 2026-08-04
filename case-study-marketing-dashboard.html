@@ -111,13 +111,14 @@ header{
   font-weight:400;
   font-size:19px;
   color:var(--ink-soft);
-  max-width:600px;
-  margin-top:18px;
+  max-width:760px;
+  margin-top:50px;
+  margin-bottom:50px;
 }
 .hero-meta{
   display:flex;
   gap:32px;
-  margin-top:34px;
+  margin-top:50px;
   padding-top:22px;
   border-top:1px solid var(--line);
   font-family:'JetBrains Mono', monospace;
@@ -130,6 +131,16 @@ header{
   font-size:13px;
   margin-top:3px;
 }
+.hero-quote{
+  font-family:'Inter', sans-serif;
+  font-weight:400;
+  max-width:500px;
+  text-align:center;
+  font-size:19px;
+  color:var(--ink);
+  
+}
+
 
 /* ---------- SCREENSHOT FRAME (signature element) ---------- */
 .sheet-frame{
@@ -246,7 +257,7 @@ section{
   gap:1px;
   background:var(--line-strong);
   border:1px solid var(--line-strong);
-  margin-top:8px;
+  margin-top:50px;
   border-radius:8px;
   overflow:hidden;
 }
@@ -462,9 +473,9 @@ footer .foot-links{
 
 <div class="hero">
   <div class="eyebrow"><span class="cellref">A1</span> MARKETING OPERATIONS / GROWTH ANALYSIS · REPEAT</div>
-  <h1>Turning scattered campaign exports into a single source of truth for media buying</h1>
-  <p class="hero-sub">A Google Sheets dashboard that unified paid and influencer campaign data across every game title, region, and channel — and changed how Repeat.gg spent its marketing budget.</p>
-<p class="hero-sub">"This might be the best Google Sheet I've ever seen" - Senior Data Analyst on the PlayStation Esports team.</p>
+  <h1>Turning scattered campaign exports into a single source of truth</h1>
+  <p class="hero-sub">TL;DR: A Google Sheets dashboard that unified paid and influencer campaign data across every game title, region, and channel. It revealed ways to improve our performance and shifted strategy in a major way.</p>
+<p class="hero-quote">"This might be the best Google Sheet I've ever seen" - Senior Data Analyst on the PlayStation Esports team.</p>
 
   <div class="hero-meta">
     <div>ROLE<span>Marketing Operations</span></div>
@@ -488,7 +499,7 @@ footer .foot-links{
   <div class="section-head">
     <h2>The problem</h2>
     <div class="section-body">
-      <p>Repeat ran marketing across a growing catalog of game titles — paid Google Ads, Social ads, YouTube integrations, dedicated creator content, Twitch streams, Discord, TikTok — with reporting being done mostly adhoc and individually per channel. </p>
+      <p>Repeat ran marketing — Google Ads, Social ads, YouTube integrations, dedicated creator content, Twitch streams, Discord, TikTok — across a growing catalog of game titles with reporting being done mostly adhoc and individually per channel. </p>
       <p>There was no single view of what was actually working. Budget decisions were made channel by channel, campaign by campaign, without a way to compare creators or channels across regions or languages, as one example.</p>
       <div class="tag-row">
         <span class="tag">Google Ads</span>
@@ -507,8 +518,8 @@ footer .foot-links{
   <div class="section-head">
     <h2>What I built</h2>
     <div class="section-body">
-      <p>I built a central database tab that pulled every export in automatically via <strong>IMPORTRANGE</strong>, then layered nested <strong>QUERY</strong> formulas on top — filtered by a live date range and dropdown segments — to aggregate spend, signups, entries, and monthly active uniques into CPA, CPE, and CPUE on demand.</p>
-      <p>No pivot tables. The entire dashboard — top campaigns, top creators, spend trend lines — runs off QUERY output, which meant every chart stayed live the moment a new export landed in the database tab.</p>
+      <p>I built a central database that pulled every export in automatically via <strong>IMPORTRANGE</strong>, then layered nested <strong>QUERY</strong> formulas on top to aggregate spend, signups, entries, and monthly active uniques into CPA, CPE, and CPUE on demand. We were already doing this for each channel individually, but this dashboard showed everything together and automated it so updating data took 15 minutes.</p>
+      <p>No pivot tables. The entire dashboard runs off QUERY output, which meant every chart stayed live the moment a new export landed in the database tab.</p>
       <div class="formula-block">=<span class="fn">QUERY</span>(DataCombined!$A$1:$X,"<br>
 <span class="str">SELECT N,SUM(D),SUM(E),SUM(F),SUM(G),SUM(K),Sum(D)/SUM(E),Sum(D)/SUM(F),Sum(D)/SUM(G)</span><br>
 <span class="str">WHERE A IS NOT NULL AND N &gt;= date '"</span>&amp;text($D$7,"yyyy-mm-dd")&amp;<span class="str">"' AND N &lt;= date '"</span>&amp;text($D$8,"yyyy-mm-dd")&amp;<span class="str">"'</span><br>
@@ -536,7 +547,7 @@ footer .foot-links{
   <div class="section-head">
     <h2>What the data showed</h2>
     <div class="section-body">
-      <p>Once every channel lived in one place, three distinct patterns (among others) became visible that hadn't been before.</p>
+      <p>Three distinct patterns (among others) became visible and informed strategy for future decisions.</p>
     </div>
   </div>
   <div class="insight-grid">
