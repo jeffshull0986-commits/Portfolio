@@ -660,6 +660,10 @@ main { padding: 72px 0 80px; }
   letter-spacing: -0.5px;
   color: var(--text);
   margin-bottom: 20px;
+  /* inline-block so the underline hugs the text instead of the full column */
+  display: inline-block;
+  padding-bottom: 3px;
+  border-bottom: 4px solid var(--accent);
 }
 
 .profile-block p {
