@@ -20,26 +20,26 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg:        #0b0e0c;
-    --surface:   #121512;
-    --surface-2: #191d19;
+    --bg:        #0b1417;
+    --surface:   #14181a;
+    --surface-2: #1d2326;
     --border:    #1e231e;
     --accent:    #00acf6;
-    --text:      #ddeade;
+    --text:      #ffffff;
     --muted:     #6b7d6e;
-    --dim:       #3a3f3b;
+    --dim:       #252829;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg:        #0b0e0c;
-  --surface:   #121512;
-  --surface-2: #191d19;
+  --bg:        #0b1417;
+  --surface:   #14181a;
+  --surface-2: #1d2326;
   --border:    #1e231e;
   --accent:    #00acf6;
-  --text:      #ddeade;
+  --text:      #ffffff;
   --muted:     #6b7d6e;
-  --dim:       #3a3f3b;
+  --dim:       #252829;
 }
 
 :root[data-theme="light"] {
@@ -130,7 +130,7 @@ body {
   border-radius: 2px;
 }
 
-.header-contact { font-size: 13px; color: var(--text); }
+.header-contact { font-size: 16px; color: var(--text); }
 .header-contact a { color: var(--text); text-decoration: none; }
 .header-contact a:hover { color: var(--accent); }
 
@@ -141,8 +141,8 @@ body {
   margin-top: 32px;
   padding: 10px 20px;
   border: 1.5px solid var(--accent);
-  color: var(--accent);
-  font-size: 12px;
+  color: var(--text);
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -308,7 +308,7 @@ main { padding: 72px 0 80px; }
 }
 
 .role-company {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -331,7 +331,7 @@ main { padding: 72px 0 80px; }
 }
 
 .role-desc {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--text);
   max-width: 680px;
   line-height: 1.75;
@@ -629,17 +629,21 @@ main { padding: 72px 0 80px; }
 }
 
 .header-anchors a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 10px 20px;
+  border: 1.5px solid var(--accent);
+  color: var(--text);
   font-size: 16px;
   font-weight: 600;
-  letter-spacing: 1.2px;
+  letter-spacing: 1px;
   text-transform: uppercase;
-  color: var(--text);
   text-decoration: none;
-  border: 1px solid var(--text);
-  padding: 9px 18px;
-  transition: color 0.18s, border-color 0.18s;
+  transition: background 0.18s, color 0.18s;
 }
-.header-anchors a:hover { color: var(--accent); border-color: var(--accent); }
+.header-anchors a:hover { background: var(--accent); color: #ffffff; }
 
 /* ── PROFILE / WHO I AM ───────────────────────────────── */
 .profile-section {
@@ -662,7 +666,7 @@ main { padding: 72px 0 80px; }
   font-size: 16px;
   color: var(--text);
   line-height: 1.8;
-  max-width: 680px;
+  max-width: 800px;
   margin-bottom: 16px;
 }
 .profile-block p:last-child { margin-bottom: 0; }
@@ -693,7 +697,7 @@ html { scroll-behavior: smooth; }
   .header-name { color: #ffffff; }
   .header-contact,
   .header-contact a { color: rgba(255,255,255,0.75); }
-  .header-anchors a {   color: var(--text); border: 1px solid var(--border); }
+  .header-anchors a {   color: var(--text); border: 1px solid var(--accent); }
 
   /* Anchor nav + profile */
   .header-anchors { gap: 8px; }
