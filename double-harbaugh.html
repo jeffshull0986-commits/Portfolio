@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Double Harbaugh — Every Player Who Suited Up for Both Brothers</title>
+<meta name="description" content="The complete list of NFL players who were on a roster under both Jim Harbaugh and John Harbaugh, 2008–2026.">
+<style>
+
+/* ── TOKENS ───────────────────────────────────────────── */
+:root{
+  --bg:        #0b1417;
+  --surface:   #14181a;
+  --surface-2: #1d2326;
+  --border:    #232b2f;
+  --accent:    #00acf6;
+  --text:      #ffffff;
+  --soft:      #9fb0b7;
+
+  --bal: #241773;
+  --nyg: #0B2265;
+  --lac: #0080C6;
+  --sf:  #AA0000;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+  -webkit-text-size-adjust:100%;
+}
+img{max-width:100%;height:auto;}
+
+.wrap{max-width:1040px;margin:0 auto;padding:0 28px;}
+
+/* ── HERO ─────────────────────────────────────────────── */
+.hero{
+  position:relative;
+  min-height:640px;
+  display:flex;
+  align-items:center;
+  overflow:hidden;
+  border-bottom:1px solid var(--border);
+}
+
+/* split photo background */
+.hero-bg{
+  position:absolute;
+  inset:0;
+  display:flex;
+  z-index:0;
+}
+.hero-half{
+  position:relative;
+  flex:1;
+  overflow:hidden;
+  margin:0;
+}
+.hero-half img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  filter:grayscale(0.35) contrast(1.05);
+}
+.hero-half--john img{object-position:50% 22%;}
+.hero-half--jim  img{object-position:47% 14%;}
+
+/* seam between the two photos */
+.hero-bg::after{
+  content:'';
+  position:absolute;
+  top:0;bottom:0;left:50%;
+  width:2px;
+  margin-left:-1px;
+  background:linear-gradient(to bottom,transparent,rgba(255,255,255,0.28),transparent);
+  z-index:2;
+}
+
+/* readability overlay */
+.hero-scrim{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  background:
+    radial-gradient(ellipse 62% 78% at 50% 52%, rgba(6,11,13,0.94) 0%, rgba(6,11,13,0.78) 45%, rgba(6,11,13,0.30) 100%),
+    linear-gradient(to bottom, rgba(6,11,13,0.72) 0%, transparent 28%, transparent 62%, rgba(11,20,23,0.96) 100%);
+  pointer-events:none;
+}
+
+.hero-content{
+  position:relative;
+  z-index:3;
+  width:100%;
+  text-align:center;
+  padding:88px 28px 72px;
+}
+
+.hero-eyebrow{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:3.5px;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:18px;
+}
+
+.hero-title{
+  font-size:clamp(44px,10vw,104px);
+  font-weight:800;
+  letter-spacing:-3px;
+  line-height:0.92;
+  text-transform:uppercase;
+  text-shadow:0 4px 40px rgba(0,0,0,0.75);
+  margin-bottom:8px;
+}
+
+.hero-names{
+  display:flex;
+  justify-content:center;
+  gap:clamp(28px,9vw,120px);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:2.5px;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.62);
+  margin-bottom:34px;
+}
+
+.hero-quote{
+  max-width:760px;
+  margin:0 auto;
+  position:relative;
+  font-size:clamp(16px,2.1vw,21px);
+  line-height:1.6;
+  font-weight:500;
+  color:rgba(255,255,255,0.94);
+  padding:26px 0 0;
+  border-top:4px solid var(--accent);
+  text-wrap:balance;
+}
+.hero-quote em{font-style:normal;color:var(--accent);}
+
+/* ── SCOREBOARD ───────────────────────────────────────── */
+.scoreboard{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  border:1px solid var(--border);
+  background:var(--surface);
+  margin-top:44px;
+}
+.sb-item{
+  padding:22px 16px;
+  border-right:1px solid var(--border);
+  text-align:center;
+}
+.sb-item:last-child{border-right:none;}
+.sb-val{
+  display:block;
+  font-size:clamp(24px,3.4vw,34px);
+  font-weight:800;
+  letter-spacing:-1.2px;
+  line-height:1;
+  color:var(--accent);
+  font-variant-numeric:tabular-nums;
+  margin-bottom:7px;
+}
+.sb-lbl{
+  display:block;
+  font-size:10px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--soft);
+  line-height:1.35;
+}
+
+/* ── SECTIONS ─────────────────────────────────────────── */
+main{padding:72px 0 40px;}
+section{margin-bottom:72px;}
+
+.sec-head{margin-bottom:26px;}
+.sec-title{
+  display:inline-block;
+  font-size:clamp(22px,3.4vw,30px);
+  font-weight:800;
+  letter-spacing:-0.6px;
+  padding-bottom:3px;
+  border-bottom:4px solid var(--accent);
+  margin-bottom:14px;
+}
+.sec-sub{
+  font-size:15px;
+  color:var(--soft);
+  max-width:720px;
+  line-height:1.7;
+}
+
+/* ── COACH STINTS ─────────────────────────────────────── */
+.stints{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-top:28px;
+}
+.stint{
+  border:1px solid var(--border);
+  background:var(--surface);
+  padding:20px 22px;
+}
+.stint-who{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:12px;
+}
+.stint-line{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:14px;
+  color:var(--soft);
+  padding:5px 0;
+}
+.stint-line b{color:var(--text);font-weight:600;}
+
+/* ── TEAM BADGE ───────────────────────────────────────── */
+.tm{display:flex;align-items:center;gap:11px;}
+.tm-badge{
+  width:34px;height:34px;
+  border-radius:7px;
+  display:grid;
+  place-items:center;
+  font-size:9.5px;
+  font-weight:800;
+  letter-spacing:0.2px;
+  color:#fff;
+  flex-shrink:0;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,0.16);
+}
+.tm-badge--sm{width:26px;height:26px;border-radius:6px;font-size:8.5px;}
+.tm-bal{background:var(--bal);}
+.tm-nyg{background:var(--nyg);}
+.tm-lac{background:var(--lac);}
+.tm-sf {background:var(--sf);}
+
+.tm-txt{display:flex;flex-direction:column;line-height:1.25;min-width:0;}
+.tm-team{font-size:14px;font-weight:600;color:var(--text);}
+.tm-yrs{font-size:12.5px;color:var(--soft);font-variant-numeric:tabular-nums;}
+
+/* ── ROSTER TABLE ─────────────────────────────────────── */
+.roster{
+  width:100%;
+  border-collapse:collapse;
+  border:1px solid var(--border);
+  background:var(--surface);
+}
+.roster thead th{
+  text-align:left;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:1.6px;
+  text-transform:uppercase;
+  color:var(--soft);
+  padding:14px 18px;
+  background:var(--surface-2);
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+.roster tbody td{
+  padding:13px 18px;
+  border-bottom:1px solid var(--border);
+  vertical-align:middle;
+}
+.roster tbody tr:last-child td{border-bottom:none;}
+.roster tbody tr:hover{background:var(--surface-2);}
+
+.p-num{
+  font-size:12px;
+  color:#5d6c72;
+  font-variant-numeric:tabular-nums;
+  width:40px;
+}
+.p-name{font-size:16px;font-weight:700;letter-spacing:-0.2px;white-space:nowrap;}
+.p-pos{
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:1px;
+  color:var(--soft);
+  border:1px solid var(--border);
+  border-radius:3px;
+  padding:3px 8px;
+  display:inline-block;
+  white-space:nowrap;
+}
+
+/* status pill for the asterisk table */
+.pill{
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.8px;
+  text-transform:uppercase;
+  padding:3px 8px;
+  border-radius:3px;
+  display:inline-block;
+  white-space:nowrap;
+}
+.pill--act{background:rgba(0,172,246,0.14);color:#5cc9ff;}
+.pill--ps {background:rgba(255,255,255,0.09);color:#b9c6cb;}
+.pill--ir {background:rgba(255,170,0,0.13);color:#e8b866;}
+
+/* ── NOTES ────────────────────────────────────────────── */
+.notes{
+  border:1px solid var(--border);
+  background:var(--surface);
+  padding:26px 28px;
+}
+.note-row{
+  display:grid;
+  grid-template-columns:190px 1fr;
+  gap:20px;
+  padding:11px 0;
+  border-bottom:1px solid var(--border);
+  font-size:14.5px;
+}
+.note-row:last-child{border-bottom:none;}
+.note-k{
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:1.4px;
+  text-transform:uppercase;
+  color:var(--accent);
+  padding-top:3px;
+}
+.note-v{color:var(--soft);line-height:1.7;min-width:0;overflow-wrap:break-word;}
+.note-v b{color:var(--text);font-weight:600;}
+.note-v ul{list-style:none;}
+.note-v li{padding:3px 0;}
+.note-v li::before{content:'—';color:#4a585e;margin-right:9px;}
+.note-v a{color:var(--accent);}
+
+/* ── FOOTER ───────────────────────────────────────────── */
+.site-footer{
+  border-top:1px solid var(--border);
+  padding:40px 0 56px;
+  text-align:center;
+}
+.back-cta{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  padding:14px 30px;
+  border:1.5px solid var(--accent);
+  color:var(--accent);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  text-decoration:none;
+  transition:background 0.18s,color 0.18s;
+}
+.back-cta:hover{background:var(--accent);color:#04222e;}
+.foot-note{margin-top:22px;font-size:12px;color:#5d6c72;}
+
+/* ── RESPONSIVE ───────────────────────────────────────── */
+@media (max-width:820px){
+  .scoreboard{grid-template-columns:1fr 1fr;}
+  .sb-item:nth-child(2){border-right:none;}
+  .sb-item:nth-child(1),.sb-item:nth-child(2){border-bottom:1px solid var(--border);}
+  .stints{grid-template-columns:1fr;}
+  .note-row{grid-template-columns:1fr;gap:5px;}
+}
+
+@media (max-width:680px){
+  .wrap{padding:0 18px;}
+
+  .hero{min-height:520px;}
+  .hero-content{padding:64px 18px 52px;}
+  .hero-title{letter-spacing:-1.5px;}
+  .hero-quote{font-size:15.5px;padding-top:20px;}
+  .hero-names{gap:24px;font-size:10px;letter-spacing:1.6px;}
+
+  main{padding:52px 0 32px;}
+  section{margin-bottom:52px;}
+
+  /* table collapses into cards */
+  .roster,.roster tbody,.roster tr,.roster td{display:block;width:100%;}
+  .roster thead{display:none;}
+  .roster{border:none;background:transparent;}
+  .roster tbody tr{
+    border:1px solid var(--border);
+    background:var(--surface);
+    margin-bottom:12px;
+    padding:15px 16px;
+  }
+  .roster tbody tr:hover{background:var(--surface);}
+  .roster tbody td{border-bottom:none;padding:0;}
+  .roster tbody td + td{margin-top:11px;}
+
+  .p-num{display:none;}
+  .p-name{font-size:17px;white-space:normal;}
+  .roster td[data-lbl]::before{
+    content:attr(data-lbl);
+    display:block;
+    font-size:9.5px;
+    font-weight:700;
+    letter-spacing:1.4px;
+    text-transform:uppercase;
+    color:#5d6c72;
+    margin-bottom:6px;
+  }
+  .back-cta{width:100%;justify-content:center;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important;}
+  html{scroll-behavior:auto;}
+}
+
+</style>
+</head>
+<body>
+
+<!-- HERO ==================================================== -->
+<header class="hero">
+  <div class="hero-bg">
+    <figure class="hero-half hero-half--john">
+      <img src="images/John.png" alt="John Harbaugh on the sideline">
+    </figure>
+    <figure class="hero-half hero-half--jim">
+      <img src="images/Jim.png" alt="Jim Harbaugh on the sideline">
+    </figure>
+  </div>
+  <div class="hero-scrim"></div>
+
+  <div class="hero-content">
+    <p class="hero-eyebrow">Asked &amp; Answered for Pardon My Take</p>
+    <h1 class="hero-title">Double Harbaugh</h1>
+    <div class="hero-names">
+      <span>John · Ravens / Giants</span>
+      <span>Jim · 49ers / Chargers</span>
+    </div>
+
+    <blockquote class="hero-quote">
+      &ldquo;To me, the number one thing is we have to have guys that <em>love football</em>.
+      You just have to&hellip; We need guys that love everything about football&hellip;
+      They love every part of football.&rdquo;
+    </blockquote>
+
+    <div class="wrap">
+      <div class="scoreboard">
+        <div class="sb-item">
+          <span class="sb-val">21</span>
+          <span class="sb-lbl">Active Roster<br>Under Both</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-val">26</span>
+          <span class="sb-lbl">Any Roster<br>Under Both</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-val">4</span>
+          <span class="sb-lbl">Teams<br>Involved</span>
+        </div>
+        <div class="sb-item">
+          <span class="sb-val">19</span>
+          <span class="sb-lbl">Seasons<br>2008&ndash;2026</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- THE STINTS ------------------------------------------ -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 class="sec-title">The Overlap</h2>
+        <p class="sec-sub">
+          Two brothers, four franchises, nineteen seasons. A player only counts here if he was
+          on a roster under John <em>and</em> under Jim &mdash; in any order, in any year.
+        </p>
+      </div>
+
+      <div class="stints">
+        <div class="stint">
+          <p class="stint-who">John Harbaugh</p>
+          <div class="stint-line">
+            <span class="tm-badge tm-badge--sm tm-bal">BAL</span>
+            <span><b>Baltimore Ravens</b> &nbsp;2008&ndash;2025</span>
+          </div>
+          <div class="stint-line">
+            <span class="tm-badge tm-badge--sm tm-nyg">NYG</span>
+            <span><b>New York Giants</b> &nbsp;2026</span>
+          </div>
+        </div>
+        <div class="stint">
+          <p class="stint-who">Jim Harbaugh</p>
+          <div class="stint-line">
+            <span class="tm-badge tm-badge--sm tm-sf">SF</span>
+            <span><b>San Francisco 49ers</b> &nbsp;2011&ndash;2014</span>
+          </div>
+          <div class="stint-line">
+            <span class="tm-badge tm-badge--sm tm-lac">LAC</span>
+            <span><b>Los Angeles Chargers</b> &nbsp;2024&ndash;2026</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE 21 --------------------------------------------- -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 class="sec-title">The 21</h2>
+        <p class="sec-sub">
+          Players who dressed on the <b>active roster</b> for both brothers. This is the real answer
+          to the question.
+        </p>
+      </div>
+
+      <table class="roster">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Player</th>
+            <th>Pos</th>
+            <th>Under John</th>
+            <th>Under Jim</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="p-num">01</td>
+            <td class="p-name">Alohi Gilman</td>
+            <td data-lbl="Position"><span class="p-pos">DB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2025</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024&ndash;2025</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">02</td>
+            <td class="p-name">Anquan Boldin</td>
+            <td data-lbl="Position"><span class="p-pos">WR</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2010&ndash;2012</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-sf">SF</span><span class="tm-txt"><span class="tm-team">49ers</span><span class="tm-yrs">2013&ndash;2014</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">03</td>
+            <td class="p-name">Ben Cleveland</td>
+            <td data-lbl="Position"><span class="p-pos">OL</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2021&ndash;2025</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2025&ndash;2026</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">04</td>
+            <td class="p-name">Bradley Bozeman</td>
+            <td data-lbl="Position"><span class="p-pos">OL</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2018&ndash;2021</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024&ndash;2025</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">05</td>
+            <td class="p-name">Caleb Murphy</td>
+            <td data-lbl="Position"><span class="p-pos">LB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-nyg">NYG</span><span class="tm-txt"><span class="tm-team">Giants</span><span class="tm-yrs">2026</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024&ndash;2025</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">06</td>
+            <td class="p-name">Charlie Kolar</td>
+            <td data-lbl="Position"><span class="p-pos">TE</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2022&ndash;2025</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2026</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">07</td>
+            <td class="p-name">David Sharpe</td>
+            <td data-lbl="Position"><span class="p-pos">OL</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2021&ndash;2022</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2025</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">08</td>
+            <td class="p-name">Del'Shawn Phillips</td>
+            <td data-lbl="Position"><span class="p-pos">LB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2022&ndash;2023</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2025&ndash;2026</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">09</td>
+            <td class="p-name">Eddie Jackson</td>
+            <td data-lbl="Position"><span class="p-pos">DB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2024</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">10</td>
+            <td class="p-name">Eric Tomlinson</td>
+            <td data-lbl="Position"><span class="p-pos">TE</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2020&ndash;2021, 2023</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">11</td>
+            <td class="p-name">Gus Edwards</td>
+            <td data-lbl="Position"><span class="p-pos">RB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2018&ndash;2023</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">12</td>
+            <td class="p-name">Hayden Hurst</td>
+            <td data-lbl="Position"><span class="p-pos">TE</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2018&ndash;2019</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">13</td>
+            <td class="p-name">J.K. Dobbins</td>
+            <td data-lbl="Position"><span class="p-pos">RB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2020&ndash;2023</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">14</td>
+            <td class="p-name">Josh Johnson</td>
+            <td data-lbl="Position"><span class="p-pos">QB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2021, 2023&ndash;2024</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-sf">SF</span><span class="tm-txt"><span class="tm-team">49ers</span><span class="tm-yrs">2014</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">15</td>
+            <td class="p-name">Keaton Mitchell</td>
+            <td data-lbl="Position"><span class="p-pos">RB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2023&ndash;2025</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2026</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">16</td>
+            <td class="p-name">Marcus Williams</td>
+            <td data-lbl="Position"><span class="p-pos">DB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2022&ndash;2024</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2025</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">17</td>
+            <td class="p-name">Michael Crabtree</td>
+            <td data-lbl="Position"><span class="p-pos">WR</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2018</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-sf">SF</span><span class="tm-txt"><span class="tm-team">49ers</span><span class="tm-yrs">2011&ndash;2014</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">18</td>
+            <td class="p-name">Odafe Oweh</td>
+            <td data-lbl="Position"><span class="p-pos">LB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2021&ndash;2025</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2025</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">19</td>
+            <td class="p-name">Sam Mustipher</td>
+            <td data-lbl="Position"><span class="p-pos">OL</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2023, 2025</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024&ndash;2025</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">20</td>
+            <td class="p-name">Tavares Gooden</td>
+            <td data-lbl="Position"><span class="p-pos">ILB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2008&ndash;2010</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-sf">SF</span><span class="tm-txt"><span class="tm-team">49ers</span><span class="tm-yrs">2011&ndash;2012</span></span></div></td>
+          </tr>
+          <tr>
+            <td class="p-num">21</td>
+            <td class="p-name">Tony Jefferson</td>
+            <td data-lbl="Position"><span class="p-pos">DB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2017&ndash;2019, 2021</span></span></div></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024&ndash;2026</span></span></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- THE ASTERISKS -------------------------------------- -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 class="sec-title">The Asterisks</h2>
+        <p class="sec-sub">
+          Five more were on a roster under both brothers, but not on the active roster for both.
+          Practice squad and injured reserve count as being in the building &mdash; just not on Sunday.
+          Include them and the number goes from 21 to 26.
+        </p>
+      </div>
+
+      <table class="roster">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Player</th>
+            <th>Pos</th>
+            <th>Under John</th>
+            <th>Under Jim</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="p-num">22</td>
+            <td class="p-name">Basil Okoye</td>
+            <td data-lbl="Position"><span class="p-pos">DL</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2025</span></span></div><span class="pill pill--act" style="margin-top:8px;">Active</span></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024</span></span></div><span class="pill pill--ps" style="margin-top:8px;">Practice Squad</span></td>
+          </tr>
+          <tr>
+            <td class="p-num">23</td>
+            <td class="p-name">Cornelius Johnson</td>
+            <td data-lbl="Position"><span class="p-pos">WR</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2025</span></span></div><span class="pill pill--ps" style="margin-top:8px;">Practice Squad</span></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024</span></span></div><span class="pill pill--ps" style="margin-top:8px;">Practice Squad</span></td>
+          </tr>
+          <tr>
+            <td class="p-num">24</td>
+            <td class="p-name">Foster Sarell</td>
+            <td data-lbl="Position"><span class="p-pos">OL</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2021</span></span></div><span class="pill pill--ps" style="margin-top:8px;">Practice Squad</span></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024&ndash;2025</span></span></div><span class="pill pill--act" style="margin-top:8px;">Active</span></td>
+          </tr>
+          <tr>
+            <td class="p-num">25</td>
+            <td class="p-name">John Kelly</td>
+            <td data-lbl="Position"><span class="p-pos">RB</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2024</span></span></div><span class="pill pill--act" style="margin-top:8px;">Active</span></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-lac">LAC</span><span class="tm-txt"><span class="tm-team">Chargers</span><span class="tm-yrs">2024</span></span></div><span class="pill pill--ps" style="margin-top:8px;">Practice Squad</span></td>
+          </tr>
+          <tr>
+            <td class="p-num">26</td>
+            <td class="p-name">Kevin McDermott</td>
+            <td data-lbl="Position"><span class="p-pos">LS</span></td>
+            <td data-lbl="Under John"><div class="tm"><span class="tm-badge tm-bal">BAL</span><span class="tm-txt"><span class="tm-team">Ravens</span><span class="tm-yrs">2014</span></span></div><span class="pill pill--ir" style="margin-top:8px;">Reserve / IR</span></td>
+            <td data-lbl="Under Jim"><div class="tm"><span class="tm-badge tm-sf">SF</span><span class="tm-txt"><span class="tm-team">49ers</span><span class="tm-yrs">2013</span></span></div><span class="pill pill--act" style="margin-top:8px;">Active</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- METHOD --------------------------------------------- -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 class="sec-title">How This Was Built</h2>
+      </div>
+
+      <div class="notes">
+        <div class="note-row">
+          <div class="note-k">The Question</div>
+          <div class="note-v">Which NFL players were on a roster under <b>both</b> Jim and John Harbaugh?</div>
+        </div>
+        <div class="note-row">
+          <div class="note-k">The Answer</div>
+          <div class="note-v"><b>21</b> were on the active roster under both. <b>26</b> had any roster affiliation &mdash; including practice squad and IR &mdash; under both.</div>
+        </div>
+        <div class="note-row">
+          <div class="note-k">Data Source</div>
+          <div class="note-v">nflverse weekly and season rosters (<a href="https://github.com/nflverse/nflverse-data" target="_blank" rel="noopener">nflverse-data</a>), CC BY 4.0. Every week of every season from 2008 through 2026. 2026 is preseason-only so far.</div>
+        </div>
+        <div class="note-row">
+          <div class="note-k">Roster Levels</div>
+          <div class="note-v">
+            <ul>
+              <li><b>Active roster</b> &mdash; ACT status in at least one week</li>
+              <li><b>Reserve / IR</b> &mdash; on the team but not active (RES/PUP/INA/SUS/EXE)</li>
+              <li><b>Practice squad</b> &mdash; DEV status</li>
+              <li>Players only ever CUT or waived in a preseason transaction are excluded</li>
+            </ul>
+          </div>
+        </div>
+        <div class="note-row">
+          <div class="note-k">Near Misses</div>
+          <div class="note-v">
+            <ul>
+              <li><b>Cameron Dicker</b> &mdash; waived by BAL in week 1 of the 2022 preseason, never on the roster</li>
+              <li><b>Ben Mason</b> &mdash; on BAL 2022&ndash;23, but waived by LAC before the 2024 season</li>
+              <li><b>Billy Cundiff</b> &mdash; BAL 2009&ndash;11, but only a week 18 waiver transaction with SF in 2012</li>
+            </ul>
+          </div>
+        </div>
+        <div class="note-row">
+          <div class="note-k">The Gotcha</div>
+          <div class="note-v">nflverse codes Baltimore as <b>BLT</b> before 2016 and <b>BAL</b> from 2016 on. Same story for ARZ/ARI, CLV/CLE and HST/HOU. Normalize before joining, or you quietly lose years of data.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <a class="back-cta" href="https://jeffshull.com">&larr; Back to Portfolio</a>
+    <p class="foot-note">Built by Jeff Shull &nbsp;·&nbsp; jeffshull.com</p>
+  </div>
+</footer>
+
+</body>
+</html>
