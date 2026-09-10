@@ -186,14 +186,16 @@ body {
 .stat-ticker {
   display: flex;
   flex-wrap: wrap;
+  /* wider than the 700px text column so all five values fit on one line */
+  width: min(820px, calc(100vw - 112px));
   margin-top: 56px;
   border: 1px solid var(--border);
 }
 
 .ticker-item {
   flex: 1;
-  min-width: 120px;
-  padding: 20px 18px;
+  min-width: 100px;
+  padding: 20px 16px;
   border-right: 1px solid var(--border);
   background: var(--surface);
 }
@@ -202,9 +204,10 @@ body {
 
 .ticker-value {
   display: block;
-  font-size: clamp(20px, 2.8vw, 28px);
+  font-size: clamp(15px, 2.2vw, 24px);
   font-weight: 800;
   letter-spacing: -1px;
+  white-space: nowrap;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -711,7 +714,7 @@ html { scroll-behavior: smooth; }
   .profile-block p { font-size: 15px; }
 
   /* Stat ticker */
-  .stat-ticker { flex-direction: column; margin-top: 24px; }
+  .stat-ticker { flex-direction: column; width: auto; margin-top: 24px; }
   .ticker-item { border-right: none; border-bottom: 1px solid var(--border); }
   .ticker-item:last-child { border-bottom: none; }
 
