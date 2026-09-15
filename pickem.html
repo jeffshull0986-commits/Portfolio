@@ -265,6 +265,8 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
       <div class="linkbox" id="shareLink">—</div>
       <button class="btn" id="copyLink">Copy the link</button>
       <div style="height:9px"></div>
+      <button class="btn ghost" id="sendCardTg">Send the card to Telegram</button>
+      <div style="height:9px"></div>
       <button class="btn ghost" id="previewCard">Preview what they'll see</button>
     </section>
 
@@ -333,12 +335,39 @@ function b64urlDecode(s){
   for (var i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
   return new TextDecoder().decode(bytes);
 }
+/* The whole card rides in the address bar, and chat apps are unkind to long
+   links, so the two bulkiest fields get packed down. Both unpack anything they
+   don't recognise unchanged, which keeps older links readable. */
+var DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], DAYC = "UMTWRFS";
+function packKick(v){
+  var m = String(v||"").match(/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat) (\d{1,2}):(\d{2}) (AM|PM) ET$/);
+  if (!m) return v || "";
+  var h = parseInt(m[2],10) % 12;
+  if (m[4] === "PM") h += 12;
+  return DAYC.charAt(DAYS.indexOf(m[1])) + (h<10?"0":"") + h + m[3];
+}
+function unpackKick(v){
+  var m = String(v||"").match(/^([UMTWRFS])(\d{2})(\d{2})$/);
+  if (!m) return v || "";
+  var h24 = parseInt(m[2],10), h = h24 % 12;
+  return DAYS[DAYC.indexOf(m[1])] + " " + (h===0?12:h) + ":" + m[3] + " " + (h24<12?"AM":"PM") + " ET";
+}
+var GAS_HEAD = "https://script.google.com/macros/s/", GAS_TAIL = "/exec";
+function packEp(v){
+  v = String(v||"").trim();
+  return (v.indexOf(GAS_HEAD)===0 && v.slice(-GAS_TAIL.length)===GAS_TAIL)
+    ? "g:" + v.slice(GAS_HEAD.length, -GAS_TAIL.length) : v;
+}
+function unpackEp(v){
+  return String(v||"").indexOf("g:")===0 ? GAS_HEAD + String(v).slice(2) + GAS_TAIL : (v||"");
+}
+
 // card -> compact string: week ~ due ~ (unused) | away~home~fav(a|h)~spread~kick | ...
 function encodeCard(c){
-  var head = [c.week||"", c.due||"", "", c.ep||""]
+  var head = [c.week||"", c.due||"", "", packEp(c.ep)]
     .map(function(f){ return String(f).replace(/[~|]/g,"-"); }).join("~");
   var rows = (c.games||[]).map(function(g){
-    return [g.away||"", g.home||"", g.fav||"h", (g.spread===""||g.spread==null)?"":g.spread, g.kick||""]
+    return [g.away||"", g.home||"", g.fav||"h", (g.spread===""||g.spread==null)?"":g.spread, packKick(g.kick)]
       .map(function(f){ return String(f).replace(/[~|]/g,"-"); }).join("~");
   });
   return b64urlEncode([head].concat(rows).join("|"));
@@ -348,10 +377,10 @@ function decodeCard(s){
     var parts = b64urlDecode(s).split("|");
     var head = parts.shift().split("~");
     return {
-      week: head[0]||"", due: head[1]||"", ep: head[3]||"",
+      week: head[0]||"", due: head[1]||"", ep: unpackEp(head[3]),
       games: parts.filter(Boolean).map(function(r){
         var f = r.split("~");
-        return { away:f[0]||"", home:f[1]||"", fav:(f[2]==="a"?"a":"h"), spread:f[3]||"", kick:f[4]||"" };
+        return { away:f[0]||"", home:f[1]||"", fav:(f[2]==="a"?"a":"h"), spread:f[3]||"", kick:unpackKick(f[4]) };
       })
     };
   }catch(e){ return null; }
@@ -489,9 +518,15 @@ var grades = {};           // gameIndex -> "a" | "h" | "push"
 var entries = [];          // {name, picks:[]}
 var cardKey = "";
 
+function cardParam(){
+  // ?c= is what we hand out now; #c= stays readable for links already sent
+  var m = location.search.match(/[?&]c=([A-Za-z0-9\-_]+)/) ||
+          location.hash.match(/[#&]c=([A-Za-z0-9\-_]+)/);
+  return m ? m[1] : "";
+}
 function loadCard(){
-  var m = location.hash.match(/c=([A-Za-z0-9\-_]+)/);
-  if (m){ var d = decodeCard(m[1]); if (d && d.games.length){ return d; } }
+  var m = cardParam();
+  if (m){ var d = decodeCard(m); if (d && d.games.length){ return d; } }
   var saved = lsGet("pickem.card");
   if (saved){ try{ var p = JSON.parse(saved); if (p && p.games) return p; }catch(e){} }
   return JSON.parse(JSON.stringify(DEFAULT_CARD));
@@ -779,7 +814,7 @@ function field(label, val, onChange, type, ph){
 function commitCard(skipEditor){
   lsSet("pickem.card", JSON.stringify(card));
   var gs = liveGames();
-  var link = location.origin + location.pathname + "#c=" + encodeCard(card);
+  var link = location.origin + location.pathname + "?c=" + encodeCard(card);
   $("shareLink").textContent = link;
   var missing = gs.filter(function(g){ return g.spread==="" || g.spread==null; }).length;
   var bits = [gs.length + " of 10 games set"];
@@ -985,7 +1020,7 @@ function applyCommishDoor(){
 }
 
 /* ---------------- wire up ---------------- */
-function fromLink(){ return /c=[A-Za-z0-9\-_]+/.test(location.hash); }
+function fromLink(){ return !!cardParam(); }
 
 function setAutoStatus(msg){ var n = $("autoStatus"); if (n) n.textContent = msg; }
 
@@ -1077,6 +1112,14 @@ $("addGame").addEventListener("click", function(){
   handEdited(); commitCard();
 });
 $("copyLink").addEventListener("click", function(){ copyText($("shareLink").textContent, "Link copied"); });
+$("sendCardTg").addEventListener("click", function(){
+  // Telegram's own composer takes the link as a parameter, so it never has to
+  // find the end of it in pasted text
+  var link = $("shareLink").textContent.trim();
+  window.open("https://t.me/share/url?url=" + encodeURIComponent(link) +
+              "&text=" + encodeURIComponent((card.week || "The card") + " — tap to make your picks"),
+              "_blank", "noopener");
+});
 $("previewCard").addEventListener("click", function(){
   cardKey = keyForCard(); picks = {}; show("picks");
 });
