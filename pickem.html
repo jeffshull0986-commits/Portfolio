@@ -321,7 +321,7 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
 
     <section class="panel">
       <h2>Season standings</h2>
-      <p class="note">Saved in this browser only. Export the ledger if you want a copy somewhere safer.</p>
+      <p class="note">Kept in the sheet, so the table is the same on every device and there is nothing to carry from one card to the next. If the sheet can't be reached, this browser's own copy is shown instead.</p>
       <button class="btn ghost" id="saveWeek">Bank this week's results</button>
       <div id="season" style="margin-top:14px"></div>
       <div style="margin-top:14px" class="grid2">
@@ -1041,21 +1041,47 @@ function renderConsensus(){
 }
 
 /* ---------------- season ledger ---------------- */
+function loadSeason(){
+  var url = endpoint();
+  if (!url){ renderSeason(localSeason()); return; }
+  fetch(url + (url.indexOf("?")>-1 ? "&" : "?") + "season=1")
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res || !res.season) throw new Error("no season");
+      renderSeason(res.season);
+    })
+    .catch(function(){ renderSeason(localSeason()); });
+}
 function getSeason(){ try{ return JSON.parse(lsGet("pickem.season")||"{}"); }catch(e){ return {}; } }
 function setSeason(s){ lsSet("pickem.season", JSON.stringify(s)); }
 
-function renderSeason(){
-  var box = $("season"); box.innerHTML = "";
-  var s = getSeason(), weeks = Object.keys(s);
-  if (!weeks.length){ box.appendChild(el("div","empty","No weeks banked yet.")); return; }
-  var tot = {};
+// The sheet is the season. This only runs when it can't be reached.
+function localSeason(){
+  var s = getSeason(), weeks = Object.keys(s), tot = {};
   weeks.forEach(function(w){
     s[w].forEach(function(r){
-      if (!tot[r.name]) tot[r.name] = { w:0, l:0, weeks:0 };
+      if (!tot[r.name]) tot[r.name] = { name:r.name, w:0, l:0, weeks:0 };
       tot[r.name].w += r.score; tot[r.name].l += (r.of - r.score); tot[r.name].weeks++;
     });
   });
-  var rows = Object.keys(tot).map(function(n){ return { name:n, w:tot[n].w, l:tot[n].l, weeks:tot[n].weeks }; })
+  return { weeks: weeks, players: Object.keys(tot).map(function(n){ return tot[n]; }), skipped: 0, local: true };
+}
+
+function renderSeason(season){
+  var box = $("season"); box.innerHTML = "";
+  if (!season){
+    box.appendChild(el("div","empty","Reading the season…"));
+    loadSeason();
+    return;
+  }
+  var weeks = season.weeks || [];
+  if (!weeks.length){
+    box.appendChild(el("div","empty", season.local
+      ? "Couldn't reach the sheet, and this browser has no copy of the season."
+      : "No weeks banked yet."));
+    return;
+  }
+  var rows = (season.players || []).slice()
     .sort(function(a,b){ return (b.w-b.l) - (a.w-a.l) || b.w - a.w; });
   var t = el("table"), thead = el("thead"), tr = el("tr");
   ["","Player","Record","Pct","Wks"].forEach(function(h,i){ tr.appendChild(el("th", (i>=2&&i<=4)?"n":null, h)); });
@@ -1071,8 +1097,10 @@ function renderSeason(){
     tb.appendChild(row);
   });
   t.appendChild(tb); box.appendChild(t);
-  var note = el("div","empty", weeks.length + " week" + (weeks.length>1?"s":"") + " banked: " + weeks.join(", "));
-  box.appendChild(note);
+  var bits = [weeks.length + " week" + (weeks.length>1?"s":"") + " banked: " + weeks.join(", ")];
+  if (season.skipped) bits.push(season.skipped + " card(s) left out for being against different games");
+  if (season.local) bits.push("from this browser's copy — the sheet couldn't be reached");
+  box.appendChild(el("div","empty", bits.join(" · ")));
 }
 
 /* ---------------- round persistence ---------------- */
@@ -1097,7 +1125,7 @@ function show(which){
     $("cDue").value = card.due || "";
     $("cEp").value = endpoint();
     commitCard();
-    renderEntrants(); renderSeason();
+    renderEntrants(); renderSeason(null);
   } else {
     renderPicks();
   }
@@ -1308,13 +1336,31 @@ $("parseBtn").addEventListener("click", function(){
 });
 
 $("saveWeek").addEventListener("click", function(){
-  var graded = Object.keys(grades).length;
+  var gs = liveGames(), graded = Object.keys(grades).length;
   if (!entries.length || !graded){ toast("Grade the card first"); return; }
   var s = getSeason();
   var label = card.week || ("Card " + (Object.keys(s).length + 1));
+
+  // the browser's own copy, kept as a fallback
   s[label] = entries.map(function(e){ return { name:e.name, score:scoreOf(e), of:graded }; });
-  setSeason(s); renderSeason();
-  toast(label + " banked");
+  setSeason(s);
+
+  var url = endpoint();
+  if (!url){ renderSeason(localSeason()); toast(label + " banked on this browser"); return; }
+
+  fetch(url, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+               body: JSON.stringify({ action:"results", week: label, fp: fingerprint(),
+                 grades: gs.map(function(_,i){ return grades[i] || ""; }) }) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res || res.ok === false || !res.season) throw new Error("refused");
+      renderSeason(res.season);
+      toast(label + " banked to the sheet");
+    })
+    .catch(function(){
+      renderSeason(localSeason());
+      toast("Banked here — the sheet wouldn't take it, so it may still be on the old script");
+    });
 });
 $("exportSeason").addEventListener("click", function(){
   copyText(JSON.stringify(getSeason()), "Ledger copied");
@@ -1322,7 +1368,7 @@ $("exportSeason").addEventListener("click", function(){
 $("importSeason").addEventListener("click", function(){
   var txt = prompt("Paste a ledger export:");
   if (!txt) return;
-  try{ var p = JSON.parse(txt); setSeason(p); renderSeason(); toast("Ledger imported"); }
+  try{ var p = JSON.parse(txt); setSeason(p); renderSeason(localSeason()); toast("Ledger imported"); }
   catch(e){ toast("That wasn't a valid ledger"); }
 });
 
