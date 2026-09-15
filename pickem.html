@@ -366,6 +366,8 @@ var CARD_SIZE = 10;
 var ANCHORS = { "245":1, "99":1, "201":1, "248":1, "8":1 };   // Texas A&M, LSU, Oklahoma, Houston, Arkansas
 // ESPN conference ids for the Power 4
 var POWER4 = { "1":1, "4":1, "5":1, "8":1 };                  // ACC, Big 12, Big Ten, SEC
+// Counted as Power 4 despite the conference id — the independents share id 18 with UConn
+var POWER4_TEAMS = { "87":1 };                                // Notre Dame
 var TOP25 = 25;
 
 function kickLabel(iso){
@@ -410,10 +412,13 @@ function normalizeEvent(e){
     awayId: String(a.team.id), homeId: String(h.team.id),
     awayConf: String(a.team.conferenceId || ""), homeConf: String(h.team.conferenceId || ""),
     awayRank: rankOf(a), homeRank: rankOf(h),
+    awayP4: isP4(a.team), homeP4: isP4(h.team),
     spread: spread, fav: fav, kick: kickLabel(e.date)
   };
 }
-function isP4(conf){ return POWER4[conf] === 1; }
+function isP4(team){
+  return POWER4[String(team.conferenceId || "")] === 1 || POWER4_TEAMS[String(team.id)] === 1;
+}
 function isRanked(rank){ return rank <= TOP25; }
 function spreadOf(g){
   if (g.spread === "" || g.spread == null) return null;
@@ -443,12 +448,12 @@ function selectGames(all){
          if (used[g.id]) return false;
          var s = spreadOf(g);
          if (s == null || s >= 10) return false;
-         return (isRanked(g.awayRank) && isP4(g.homeConf)) || (isRanked(g.homeRank) && isP4(g.awayConf));
+         return (isRanked(g.awayRank) && g.homeP4) || (isRanked(g.homeRank) && g.awayP4);
        }).sort(bySpread));
 
   // 3. closest spread between Power 4 teams
   fill(all.filter(function(g){
-         return !used[g.id] && spreadOf(g) != null && isP4(g.awayConf) && isP4(g.homeConf);
+         return !used[g.id] && spreadOf(g) != null && g.awayP4 && g.homeP4;
        }).sort(bySpread));
 
   // bye weeks can leave the card short — closest remaining line on the board
