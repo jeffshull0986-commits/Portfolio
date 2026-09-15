@@ -17,14 +17,16 @@
  * If you ever edit this file, you have to Deploy → Manage deployments →
  * edit → New version, or the live URL keeps running the old code.
  *
- * Three tabs, made as needed:
- *   Picks  one row per player per card, newest submission wins
- *   Cards  the card each week's picks are supposed to be against
- *   Log    what went wrong, and what went right after going wrong
+ * Four tabs, made as needed:
+ *   Picks    one row per player per card, newest submission wins
+ *   Cards    the card each week's picks are supposed to be against
+ *   Results  which side covered, per card — the season is added up from this
+ *   Log      what went wrong, and what went right after going wrong
  */
 
 var SHEET_NAME = 'Picks';
 var CARDS_NAME = 'Cards';
+var RESULTS_NAME = 'Results';
 var LOG_NAME   = 'Log';
 var MAX_GAMES  = 12;
 var LOG_LIMIT  = 300;   // rows handed back to the commissioner's Trouble panel
@@ -40,9 +42,10 @@ function doPost(e) {
   }
   try {
     var data = JSON.parse(e.postData.contents);
-    return String(data.action || 'picks') === 'register'
-      ? registerCard_(data)
-      : storePicks_(data);
+    var action = String(data.action || 'picks');
+    if (action === 'register') return registerCard_(data);
+    if (action === 'results')  return storeResults_(data);
+    return storePicks_(data);
   } catch (err) {
     log_('error', '', '', 'could not read the submission: ' + err, '', '');
     return json_({ ok: false, error: String(err) });
@@ -110,12 +113,99 @@ function registerCard_(data) {
   return json_({ ok: true, reflagged: stale });
 }
 
+/** Which side covered each game, so the season can be added up from one place. */
+function storeResults_(data) {
+  var week = String(data.week || '').trim();
+  var grades = data.grades || [];
+  if (!week) return json_({ ok: false, error: 'need a card name' });
+  if (!grades.length) return json_({ ok: false, error: 'nothing graded yet' });
+
+  var sh = resultsSheet_();
+  if (sh.getLastRow() >= 2) {
+    var rows = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues();
+    for (var i = rows.length - 1; i >= 0; i--) {
+      if (String(rows[i][0]).trim().toLowerCase() === week.toLowerCase()) sh.deleteRow(i + 2);
+    }
+  }
+  sh.appendRow([week, grades.join(','), new Date(), String(data.fp || '')]);
+  log_('info', week, '', 'results banked for ' + graded_(grades) + ' game(s)', String(data.fp || ''), '');
+  return json_({ ok: true, season: season_() });
+}
+
+function graded_(grades) {
+  var n = 0;
+  for (var i = 0; i < grades.length; i++) if (String(grades[i] || '').trim()) n++;
+  return n;
+}
+
+/** Adds up every banked card. No browser holds any of this. */
+function season_() {
+  var results = allResults_();
+  if (!results.length) return { weeks: [], players: [], skipped: 0 };
+
+  var picks = allPicks_(), players = {}, weeks = [], skipped = 0;
+
+  results.forEach(function (r) {
+    var card = reference_(r.week);
+    if (!card.games.length) return;          // no game list, so a/h means nothing
+    weeks.push(r.week);
+
+    picks.forEach(function (p) {
+      if (String(p.week).trim().toLowerCase() !== r.week.toLowerCase()) return;
+      if (p.flag) { skipped++; return; }      // picked a different card, cannot be scored
+      var name = p.name, w = 0, l = 0;
+      for (var i = 0; i < r.grades.length && i < card.games.length; i++) {
+        var g = String(r.grades[i] || '').trim();
+        if (!g) continue;
+        if (g === 'push') { w++; continue; }
+        var sides = String(card.games[i]).split('>');
+        var covered = (g === 'a' ? sides[0] : sides[1]) || '';
+        var took = String(p.picks[i] || '');
+        if (!took) { l++; continue; }
+        if (took.trim().toLowerCase() === covered.trim().toLowerCase()) w++; else l++;
+      }
+      if (!players[name]) players[name] = { name: name, w: 0, l: 0, weeks: 0 };
+      players[name].w += w; players[name].l += l; players[name].weeks++;
+    });
+  });
+
+  var rows = Object.keys(players).map(function (k) { return players[k]; });
+  rows.sort(function (a, b) { return (b.w - b.l) - (a.w - a.l) || b.w - a.w; });
+  return { weeks: weeks, players: rows, skipped: skipped };
+}
+
+function allResults_() {
+  var sh = resultsSheet_();
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues()
+    .filter(function (r) { return String(r[0]).trim(); })
+    .map(function (r) {
+      return { week: String(r[0]).trim(), grades: String(r[1] || '').split(','), fp: String(r[3] || '') };
+    });
+}
+
+function allPicks_() {
+  var sh = picksSheet_();
+  if (sh.getLastRow() < 2) return [];
+  var width = 3 + MAX_GAMES + 2;
+  return sh.getRange(2, 1, sh.getLastRow() - 1, width).getValues()
+    .filter(function (r) { return String(r[2]).trim(); })
+    .map(function (r) {
+      return {
+        week: String(r[1]), name: String(r[2]),
+        picks: r.slice(3, 3 + MAX_GAMES).map(String),
+        flag: String(r[3 + MAX_GAMES] || '')
+      };
+    });
+}
+
 /* ----------------------------------------------------------------- read */
 
 function doGet(e) {
   try {
     var p = (e && e.parameter) || {};
     if (String(p.log || '') === '1') return json_({ ok: true, log: readLog_() });
+    if (String(p.season || '') === '1') return json_({ ok: true, season: season_() });
 
     var week = String(p.week || '').trim().toLowerCase();
     var sh = picksSheet_();
@@ -234,7 +324,8 @@ function picksSheet_() {
   head.push('Flag', 'Card id');
   return sheet_(SHEET_NAME, head);
 }
-function cardsSheet_() { return sheet_(CARDS_NAME, ['Card', 'Card id', 'Games', 'Registered', 'By']); }
+function cardsSheet_()   { return sheet_(CARDS_NAME, ['Card', 'Card id', 'Games', 'Registered', 'By']); }
+function resultsSheet_() { return sheet_(RESULTS_NAME, ['Card', 'Who covered', 'Banked', 'Card id']); }
 function logSheet_()   { return sheet_(LOG_NAME,   ['When', 'Level', 'Card', 'Player', 'What happened', 'Card id']); }
 
 function sheet_(name, head) {
