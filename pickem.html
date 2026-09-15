@@ -189,6 +189,13 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
 .bar{height:6px;background:var(--stock-2);border-radius:99px;overflow:hidden;margin-top:3px}
 .bar i{display:block;height:100%;background:var(--ink)}
 .consensus-row{padding:9px 0;border-bottom:1px solid var(--rule);font-size:13.5px}
+.logrow{padding:8px 0;border-bottom:1px solid var(--rule);font-size:13px;display:flex;gap:9px;align-items:baseline}
+.logrow .when{font-size:11px;color:var(--ink-soft);white-space:nowrap;font-variant-numeric:tabular-nums}
+.logrow .lvl{font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--rule);border-radius:2px;padding:1px 5px;white-space:nowrap}
+.logrow .lvl.warn,.logrow .lvl.error{border-color:var(--stamp);color:var(--stamp)}
+.logrow .what{min-width:0;overflow-wrap:break-word}
+.logrow .what b{font-weight:600}
 /* two even columns, both ragged-left, so the home side starts at the same
    place on every row instead of drifting with the name lengths */
 .cons-sides{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
@@ -283,6 +290,16 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
       <p class="note">Cards turn in straight to the sheet — the web app URL is built into the page, so it is not part of the share link and there is nothing to re-enter. Paste a different URL here to point this browser somewhere else; clear the box to go back to the built-in one.</p>
       <div class="field"><span>Web app URL</span><input type="text" id="cEp" placeholder="https://script.google.com/macros/s/…/exec"></div>
       <button class="btn ghost" id="pullSheet">Pull this week's picks from the sheet</button>
+      <div style="height:9px"></div>
+      <button class="btn ghost" id="registerCard">Register this as the official card</button>
+      <p class="note" id="regStatus" style="margin:9px 0 0"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Trouble</h2>
+      <p class="note">Cards that arrived against different games, submissions that failed and later went through, and anything the sheet refused. Kept by the sheet, so it covers everybody, not just this browser.</p>
+      <button class="btn ghost" id="loadLog">Check the log</button>
+      <div id="logBox" style="margin-top:14px"></div>
     </section>
 
     <section class="panel">
@@ -644,13 +661,72 @@ function renderPicks(){
 
 var submitting = false, submitted = false, sheetFailed = false;
 
+/* Which card this is. Matchups only — a line that moved is the same card, a
+   different game is not. */
+function gameList(){
+  return liveGames().map(function(g){ return g.away + ">" + g.home; });
+}
+function fingerprint(){
+  var str = gameList().join("|"), h = 2166136261;
+  for (var i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = (h * 16777619) >>> 0; }
+  return h.toString(36);
+}
+
 function payload(){
   var gs = liveGames();
   return {
     week: card.week || "Card",
     name: ($("who").value || "").trim() || "Anonymous",
+    fp: fingerprint(),
+    games: gameList(),
     picks: gs.map(function(g,i){ return picks[i] === "a" ? g.away : g.home; })
   };
+}
+
+/* A card that couldn't be sent waits here and goes again next time the page
+   opens, rather than being lost with a toast nobody saw. */
+var OUTBOX_KEY = "pickem.outbox";
+function outbox(){
+  try{ return JSON.parse(lsGet(OUTBOX_KEY) || "[]") || []; }catch(e){ return []; }
+}
+function outboxPut(body, why){
+  var q = outbox().filter(function(o){ return !(o.body.week === body.week && o.body.name === body.name); });
+  q.push({ body: body, at: new Date().toISOString(), why: why || "" });
+  lsSet(OUTBOX_KEY, JSON.stringify(q.slice(-20)));
+}
+function outboxDrop(at){
+  lsSet(OUTBOX_KEY, JSON.stringify(outbox().filter(function(o){ return o.at !== at; })));
+}
+function flushOutbox(){
+  var q = outbox(), url = endpoint();
+  if (!q.length || !url) return;
+  q.forEach(function(o){
+    var body = JSON.parse(JSON.stringify(o.body));
+    body.retryOf = o.at;
+    fetch(url, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(body) })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if (!res || res.ok === false) return;
+        outboxDrop(o.at);
+        toast((o.body.name || "A card") + "'s picks from earlier went through");
+      })
+      .catch(function(){ /* still down — it keeps waiting */ });
+  });
+}
+
+/* The opaque retry can't read a response, so ask the sheet whether the row
+   actually landed instead of telling the player it did. */
+function confirmLanded(body){
+  var url = endpoint();
+  return fetch(url + (url.indexOf("?")>-1 ? "&" : "?") + "week=" + encodeURIComponent(body.week))
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      var mine = (res && res.entries || []).filter(function(e){
+        return norm(e.name) === norm(body.name);
+      });
+      return mine.length > 0;
+    })
+    .catch(function(){ return false; });
 }
 
 function submitToSheet(){
@@ -658,28 +734,37 @@ function submitToSheet(){
   var name = ($("who").value || "").trim();
   if (!name){ toast("Put your name on it first"); $("who").focus(); return; }
   submitting = true; renderPicks();
-  var body = JSON.stringify(payload());
+  var data = payload(), body = JSON.stringify(data);
   var url = endpoint();
 
   // text/plain keeps this a simple request, so no preflight to fail on
+  function landed(res){
+    submitting = false; submitted = true; renderPicks();
+    toast(res && res.flagged
+      ? "Card's in — but it isn't the card the commissioner registered"
+      : "Card's in");
+  }
+  function held(why){
+    submitting = false; sheetFailed = true;
+    outboxPut(data, why);
+    renderPicks();
+    toast("Couldn't reach the sheet — your picks are saved here and will go on their own");
+  }
+
+  // text/plain keeps this a simple request, so no preflight to fail on
   fetch(url, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:body })
-    .then(function(r){ return r.json().catch(function(){ return {ok:true}; }); })
+    .then(function(r){ return r.json().catch(function(){ return null; }); })
     .then(function(res){
       if (res && res.ok === false) throw new Error(res.error || "rejected");
-      submitting = false; submitted = true; renderPicks();
-      toast("Card's in");
+      if (res) return landed(res);
+      throw new Error("unreadable reply");
     })
-    .catch(function(){
-      // opaque retry — the row still lands even when the response can't be read
+    .catch(function(err){
+      // the retry can't be read, so confirm against the sheet rather than assume
       fetch(url, { method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:body })
-        .then(function(){
-          submitting = false; submitted = true; renderPicks();
-          toast("Card's in");
-        })
-        .catch(function(){
-          submitting = false; sheetFailed = true; renderPicks();
-          toast("Sheet's unreachable — post to the chat instead");
-        });
+        .then(function(){ return confirmLanded(data); })
+        .then(function(ok){ return ok ? landed(null) : held(String(err && err.message || err)); })
+        .catch(function(){ held(String(err && err.message || err)); });
     });
 }
 
@@ -1140,6 +1225,60 @@ $("pullSheet").addEventListener("click", function(){
 
 $("submitSheet").addEventListener("click", submitToSheet);
 
+$("registerCard").addEventListener("click", function(){
+  var url = endpoint(), gs = liveGames();
+  if (!url){ toast("No sheet to register with"); return; }
+  if (!gs.length){ toast("Build the card first"); return; }
+  $("regStatus").textContent = "Registering…";
+  fetch(url, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+               body: JSON.stringify({ action:"register", week: card.week || "Card",
+                                      fp: fingerprint(), games: gameList() }) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res || res.ok === false) throw new Error((res && res.error) || "refused");
+      $("regStatus").textContent = "Registered as " + fingerprint() + "." +
+        (res.reflagged ? " " + res.reflagged + " row(s) already in the sheet are against a different card." : "");
+      toast("Card registered");
+    })
+    .catch(function(){
+      $("regStatus").textContent = "Couldn't register it — the sheet may still be running the old script.";
+      toast("Couldn't reach the sheet");
+    });
+});
+
+$("loadLog").addEventListener("click", function(){
+  var url = endpoint(), box = $("logBox");
+  box.innerHTML = "";
+  if (!url){ box.appendChild(el("div","empty","No sheet set.")); return; }
+  box.appendChild(el("div","empty","Reading…"));
+  fetch(url + (url.indexOf("?")>-1 ? "&" : "?") + "log=1")
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      box.innerHTML = "";
+      if (!res || !res.log){
+        box.appendChild(el("div","empty","No log came back. The sheet is probably still running the older script — redeploy it to start keeping one."));
+        return;
+      }
+      if (!res.log.length){ box.appendChild(el("div","empty","Nothing has gone wrong yet.")); return; }
+      res.log.forEach(function(r){
+        var row = el("div","logrow");
+        var when = new Date(r.at);
+        row.appendChild(el("span","when", isNaN(when.getTime()) ? "" :
+          when.toLocaleString([], {month:"numeric", day:"numeric", hour:"numeric", minute:"2-digit"})));
+        row.appendChild(el("span","lvl " + (r.level||"info"), r.level || "info"));
+        var what = el("span","what");
+        if (r.who){ what.appendChild(el("b",null,r.who)); what.appendChild(document.createTextNode(" — ")); }
+        what.appendChild(document.createTextNode((r.card ? r.card + ": " : "") + (r.detail||"")));
+        row.appendChild(what);
+        box.appendChild(row);
+      });
+    })
+    .catch(function(){
+      box.innerHTML = "";
+      box.appendChild(el("div","empty","Couldn't read the log from here."));
+    });
+});
+
 $("addGame").addEventListener("click", function(){
   card.games.push({ away:"", home:"", fav:"h", spread:"", kick:"" });
   handEdited(); commitCard();
@@ -1189,6 +1328,7 @@ $("importSeason").addEventListener("click", function(){
 
 applyCommishDoor();
 show("picks");
+flushOutbox();
 
 // A card that came from a link is frozen. A hand-built one is the commissioner's.
 // Anything else builds itself from this week's slate.
