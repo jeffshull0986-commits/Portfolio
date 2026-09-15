@@ -189,6 +189,14 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
 .bar{height:6px;background:var(--stock-2);border-radius:99px;overflow:hidden;margin-top:3px}
 .bar i{display:block;height:100%;background:var(--ink)}
 .consensus-row{padding:9px 0;border-bottom:1px solid var(--rule);font-size:13.5px}
+/* two even columns, both ragged-left, so the home side starts at the same
+   place on every row instead of drifting with the name lengths */
+.cons-sides{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.cons-side{min-width:0}
+.cons-team{display:flex;align-items:baseline;gap:6px}
+.cons-count{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp)}
+.cons-who{font-size:11px;line-height:1.35;color:var(--ink-soft);overflow-wrap:break-word;margin-top:1px}
+.cons-who.none{opacity:.55}
 .hide{display:none !important}
 .empty{font-size:13.5px;color:var(--ink-soft);padding:14px 0}
 @media (max-width:400px){
@@ -716,10 +724,16 @@ function parsePaste(raw){
     var looksLikeHeader = /week|card|picks/i.test(line) && (line.indexOf("—")>-1 || line.indexOf("-")>-1 || line.indexOf(":")>-1);
     if (looksLikeHeader && nameMatch){
       flush();
+      // "Chris — Houston, ..." puts the name first, but the card's own format
+      // is "WEEK 3 — Chris", which leaves nothing but boilerplate on the left
       var nm = nameMatch[1].replace(/^[^A-Za-z]*/,"").replace(/\b(week\s*\d+|card|picks|w\d+)\b/gi,"").replace(/[—–\-:]/g,"").trim();
-      cur = { name: nm || "Someone", tokens: [], raw: line };
-      var rest = nameMatch[2].trim();
-      if (rest) absorb(rest);
+      var rest = nameMatch[2].trim(), takenAsName = false;
+      if (!nm){
+        var justName = rest.match(/^([A-Za-z][A-Za-z .'\-]{0,23})$/);
+        if (justName){ nm = justName[1].trim(); takenAsName = true; }
+      }
+      cur = { name: nm, tokens: [], raw: line };   // blank lets absorb() find it
+      if (rest && !takenAsName) absorb(rest);
       return;
     }
     if (!cur) { cur = { name:"", tokens:[], raw:line }; }
@@ -915,13 +929,27 @@ function renderConsensus(){
   var gs = liveGames();
   box.appendChild(el("h2",null,"Where the room stood"));
   gs.forEach(function(g, i){
-    var a = entries.filter(function(e){ return e.picks[i]==="a"; }).length;
-    var h = entries.filter(function(e){ return e.picks[i]==="h"; }).length;
-    var tot = a + h; if (!tot) return;
+    var away = entries.filter(function(e){ return e.picks[i]==="a"; });
+    var home = entries.filter(function(e){ return e.picks[i]==="h"; });
+    var tot = away.length + home.length; if (!tot) return;
     var row = el("div","consensus-row");
-    var pctA = Math.round(a/tot*100);
-    row.appendChild(el("div", null, g.away + " " + a + " · " + h + " " + g.home));
-    var bar = el("div","bar"); var fill = el("i"); fill.style.width = pctA + "%"; bar.appendChild(fill);
+    var sides = el("div","cons-sides");
+    [[g.away, away], [g.home, home]].forEach(function(o){
+      var side = el("div","cons-side");
+      var head = el("div","cons-team");
+      head.appendChild(el("span",null,o[0]));
+      head.appendChild(el("span","cons-count", String(o[1].length)));
+      side.appendChild(head);
+      var who = el("div","cons-who", o[1].length
+        ? o[1].map(function(e){ return e.name; }).join(", ")
+        : "nobody");
+      if (!o[1].length) who.classList.add("none");
+      side.appendChild(who);
+      sides.appendChild(side);
+    });
+    row.appendChild(sides);
+    var bar = el("div","bar"); var fill = el("i");
+    fill.style.width = Math.round(away.length/tot*100) + "%"; bar.appendChild(fill);
     row.appendChild(bar);
     box.appendChild(row);
   });
