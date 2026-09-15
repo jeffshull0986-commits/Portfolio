@@ -272,7 +272,7 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
 
     <section class="panel">
       <h2>Send picks to a spreadsheet</h2>
-      <p class="note">Optional. Paste your Apps Script web app URL and the card turns in directly to your sheet — no message in the chat. Needs the page on your own hosting; claude.ai blocks outside requests.</p>
+      <p class="note">Cards turn in straight to the sheet — the web app URL is built into the page, so it is not part of the share link and there is nothing to re-enter. Paste a different URL here to point this browser somewhere else; clear the box to go back to the built-in one.</p>
       <div class="field"><span>Web app URL</span><input type="text" id="cEp" placeholder="https://script.google.com/macros/s/…/exec"></div>
       <button class="btn ghost" id="pullSheet">Pull this week's picks from the sheet</button>
     </section>
@@ -352,19 +352,20 @@ function unpackKick(v){
   var h24 = parseInt(m[2],10), h = h24 % 12;
   return DAYS[DAYC.indexOf(m[1])] + " " + (h===0?12:h) + ":" + m[3] + " " + (h24<12?"AM":"PM") + " ET";
 }
-var GAS_HEAD = "https://script.google.com/macros/s/", GAS_TAIL = "/exec";
-function packEp(v){
-  v = String(v||"").trim();
-  return (v.indexOf(GAS_HEAD)===0 && v.slice(-GAS_TAIL.length)===GAS_TAIL)
-    ? "g:" + v.slice(GAS_HEAD.length, -GAS_TAIL.length) : v;
-}
-function unpackEp(v){
-  return String(v||"").indexOf("g:")===0 ? GAS_HEAD + String(v).slice(2) + GAS_TAIL : (v||"");
-}
+/* The Apps Script web app this page turns cards in to. It belongs to the page
+   rather than to any one card, so it no longer rides inside share links: the
+   commissioner never re-enters it, and every player's copy of the page can
+   post straight to the sheet. Anyone can read it here, which is the same
+   exposure it had inside a share link — an unguessable URL that accepts rows,
+   and nothing more. A value typed into the commissioner tools overrides it on
+   that browser only. */
+var DEFAULT_EP = "https://script.google.com/macros/s/AKfycbwsLapvk517FEzOsxzimgLqVukrysys6ZnIewBInb5IfgSfiuGg3Afo-pHa8hW0TF4/exec";
+var EP_KEY = "pickem.ep";
+function endpoint(){ return (lsGet(EP_KEY) || DEFAULT_EP || "").trim(); }
 
 // card -> compact string: week ~ due ~ (unused) | away~home~fav(a|h)~spread~kick | ...
 function encodeCard(c){
-  var head = [c.week||"", c.due||"", "", packEp(c.ep)]
+  var head = [c.week||"", c.due||"", "", ""]
     .map(function(f){ return String(f).replace(/[~|]/g,"-"); }).join("~");
   var rows = (c.games||[]).map(function(g){
     return [g.away||"", g.home||"", g.fav||"h", (g.spread===""||g.spread==null)?"":g.spread, packKick(g.kick)]
@@ -377,7 +378,7 @@ function decodeCard(s){
     var parts = b64urlDecode(s).split("|");
     var head = parts.shift().split("~");
     return {
-      week: head[0]||"", due: head[1]||"", ep: unpackEp(head[3]),
+      week: head[0]||"", due: head[1]||"",
       games: parts.filter(Boolean).map(function(r){
         var f = r.split("~");
         return { away:f[0]||"", home:f[1]||"", fav:(f[2]==="a"?"a":"h"), spread:f[3]||"", kick:unpackKick(f[4]) };
@@ -503,7 +504,6 @@ function buildFromSlate(weekNo){
       return {
         week: wk ? ("Week " + wk) : "The Card",
         due: picked[0] ? dueLocal(picked[0].date) : "",
-        ep: (card && card.ep) || "",
         auto: true, weekNo: wk,
         games: picked.map(function(g){
           return { away:g.away, home:g.home, fav:g.fav, spread:g.spread, kick:g.kick };
@@ -618,7 +618,7 @@ function renderPicks(){
   $("progress").innerHTML = done
     ? "<b>Card complete.</b> Post it before kickoff."
     : "<b>" + made + " of " + gs.length + "</b> picked";
-  var toSheet = !!(card.ep && card.ep.trim()) && !sheetFailed;
+  var toSheet = !!endpoint() && !sheetFailed;
   $("submitSheet").classList.toggle("hide", !toSheet);
   $("sendTg").classList.toggle("hide", toSheet);
   $("copyPicks").classList.toggle("hide", toSheet);
@@ -651,7 +651,7 @@ function submitToSheet(){
   if (!name){ toast("Put your name on it first"); $("who").focus(); return; }
   submitting = true; renderPicks();
   var body = JSON.stringify(payload());
-  var url = card.ep.trim();
+  var url = endpoint();
 
   // text/plain keeps this a simple request, so no preflight to fail on
   fetch(url, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:body })
@@ -982,7 +982,7 @@ function show(which){
   if (which === "commish"){
     $("cWeek").value = card.week || "";
     $("cDue").value = card.due || "";
-    $("cEp").value = card.ep || "";
+    $("cEp").value = endpoint();
     commitCard();
     renderEntrants(); renderSeason();
   } else {
@@ -1077,10 +1077,15 @@ $("lockCommish").addEventListener("click", function(){
 function handEdited(){ card.auto = false; }
 $("cWeek").addEventListener("input", function(){ card.week = $("cWeek").value; handEdited(); commitCard(true); });
 $("cDue").addEventListener("input", function(){ card.due = $("cDue").value; handEdited(); commitCard(true); });
-$("cEp").addEventListener("input", function(){ card.ep = $("cEp").value.trim(); commitCard(true); });
+$("cEp").addEventListener("input", function(){
+  var v = $("cEp").value.trim();
+  // blank falls back to the one built into the page
+  if (v && v !== DEFAULT_EP) lsSet(EP_KEY, v); else { try{ localStorage.removeItem(EP_KEY); }catch(e){} }
+  renderPicks();
+});
 
 $("pullSheet").addEventListener("click", function(){
-  var url = (card.ep||"").trim();
+  var url = endpoint();
   if (!url){ toast("No web app URL set"); return; }
   var gs = liveGames();
   toast("Checking the sheet…");
