@@ -228,7 +228,7 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
       </div>
     </section>
 
-    <div class="below">
+    <div class="below hide" id="commishDoor">
       <button id="toCommish">Commissioner tools</button>
     </div>
   </main>
@@ -305,6 +305,7 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
 
     <div class="below">
       <button id="toPicks">Back to the card</button>
+      <button id="lockCommish" style="margin-left:14px">Hide these tools</button>
     </div>
   </main>
 </div>
@@ -954,6 +955,35 @@ function show(which){
   }
 }
 
+/* ---------------- commissioner door ---------------- */
+// The tools are one CSS class away for anyone who reads the source — this only
+// keeps them out of the way of the group, it is not access control.
+var COMMISH_KEY = "pickem.commish";
+function flagPresent(){
+  return /(^|[?&])commish(&|=|$)/.test(location.search) || /(^|[#&])commish(&|=|$)/.test(location.hash);
+}
+var doorShutThisView = false;
+function commishUnlocked(){
+  return !doorShutThisView && (flagPresent() || lsGet(COMMISH_KEY) === "1");
+}
+// Take the flag back out of the address so hiding the tools actually sticks.
+function stripCommishFlag(){
+  function drop(str, lead){
+    return str.replace(new RegExp("([" + lead + "&])commish(=[^&]*)?(&|$)"),
+                       function(m, pre, val, post){ return post ? pre : ""; });
+  }
+  var search = drop(location.search, "?"), hash = drop(location.hash, "#");
+  if (search === "?") search = "";
+  if (hash === "#") hash = "";
+  try{ history.replaceState(null, "", location.pathname + search + hash); }catch(e){}
+}
+function applyCommishDoor(){
+  var open = commishUnlocked();
+  $("commishDoor").classList.toggle("hide", !open);
+  if (flagPresent()) lsSet(COMMISH_KEY, "1");   // remembered on this browser from here on
+  return open;
+}
+
 /* ---------------- wire up ---------------- */
 function fromLink(){ return /c=[A-Za-z0-9\-_]+/.test(location.hash); }
 
@@ -998,8 +1028,16 @@ $("sendTg").addEventListener("click", function(){
   window.open("https://t.me/share/url?url=&text=" + encodeURIComponent(txt), "_blank", "noopener");
 });
 $("copyPicks").addEventListener("click", function(){ copyText(picksText(), "Picks copied"); });
-$("toCommish").addEventListener("click", function(){ show("commish"); });
+$("toCommish").addEventListener("click", function(){ if (commishUnlocked()) show("commish"); });
 $("toPicks").addEventListener("click", function(){ show("picks"); });
+$("lockCommish").addEventListener("click", function(){
+  try{ localStorage.removeItem(COMMISH_KEY); }catch(e){}
+  stripCommishFlag();
+  doorShutThisView = true;
+  applyCommishDoor();
+  show("picks");
+  toast("Tools hidden — add ?commish to the address to get back in");
+});
 
 function handEdited(){ card.auto = false; }
 $("cWeek").addEventListener("input", function(){ card.week = $("cWeek").value; handEdited(); commitCard(true); });
@@ -1073,6 +1111,7 @@ $("importSeason").addEventListener("click", function(){
   catch(e){ toast("That wasn't a valid ledger"); }
 });
 
+applyCommishDoor();
 show("picks");
 
 // A card that came from a link is frozen. A hand-built one is the commissioner's.
