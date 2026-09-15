@@ -117,10 +117,8 @@ input::placeholder,textarea::placeholder{color:#A69E86}
 .side[disabled]{cursor:default;opacity:.55}
 .game.graded .side.win{border-color:var(--cover);box-shadow:inset 0 0 0 1.5px var(--cover)}
 
-/* ---------- tiebreak + actions ---------- */
-.tb{padding:14px 20px;border-bottom:1px solid var(--rule)}
-.tb-q{font-size:13px;color:var(--ink-soft);margin-bottom:5px}
-.tb input{max-width:120px}
+/* ---------- actions ---------- */
+.inline-lbl{font-size:13px;color:var(--ink-soft);margin-bottom:5px}
 .actions{padding:18px 20px 26px;display:flex;flex-direction:column;gap:9px}
 .btn{
   font-family:'Oswald',sans-serif;font-weight:600;font-size:16px;
@@ -222,11 +220,6 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
 
       <ul class="games" id="gameList"></ul>
 
-      <div class="tb" id="tbWrap">
-        <div class="tb-q" id="tbQ"></div>
-        <input type="number" id="tbVal" placeholder="0" inputmode="numeric" min="0" max="200">
-      </div>
-
       <div class="actions">
         <div class="progress" id="progress"></div>
         <button class="btn tg hide" id="submitSheet">Turn in my card</button>
@@ -244,13 +237,22 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
   <main id="view-commish" class="hide">
 
     <section class="panel">
-      <h2>Build this week's card</h2>
-      <p class="note">Set the ten games, then send the link to the group chat. Nobody signs in — the whole card travels inside the link.</p>
+      <h2>This week's ten</h2>
+      <p class="note">The card fills itself in from the live slate. Texas A&amp;M, LSU, Oklahoma, Houston and Arkansas always get a slot. The rest go, in order, to ranked teams playing each other, then a ranked team facing a Power 4 opponent inside ten points, then the closest spreads between Power 4 teams.</p>
+      <div class="grid2">
+        <div class="field"><span>Week (blank uses the current one)</span><input type="number" id="cWeekNo" min="1" max="20" placeholder="current"></div>
+        <div class="field"><span>&nbsp;</span><button class="btn ghost" id="autoBuild">Rebuild from the live slate</button></div>
+      </div>
+      <p class="note" id="autoStatus" style="margin:0"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Fix up the card</h2>
+      <p class="note">Everything above is editable — change a line, swap a team, drop a game. Then send the link to the group chat. Nobody signs in; the whole card travels inside the link.</p>
       <div class="grid2">
         <div class="field"><span>Card name</span><input type="text" id="cWeek" placeholder="Week 4" maxlength="28"></div>
         <div class="field"><span>Picks due</span><input type="datetime-local" id="cDue"></div>
       </div>
-      <div class="field"><span>Tiebreaker question</span><input type="text" id="cTb" placeholder="Total points in the night game" maxlength="60"></div>
       <div id="editor"></div>
       <div style="margin-top:14px">
         <button class="btn ghost" id="addGame">Add a game</button>
@@ -330,9 +332,9 @@ function b64urlDecode(s){
   for (var i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
   return new TextDecoder().decode(bytes);
 }
-// card -> compact string: week ~ due ~ tbQuestion | away~home~fav(a|h)~spread~kick | ...
+// card -> compact string: week ~ due ~ (unused) | away~home~fav(a|h)~spread~kick | ...
 function encodeCard(c){
-  var head = [c.week||"", c.due||"", c.tb||"", c.ep||""]
+  var head = [c.week||"", c.due||"", "", c.ep||""]
     .map(function(f){ return String(f).replace(/[~|]/g,"-"); }).join("~");
   var rows = (c.games||[]).map(function(g){
     return [g.away||"", g.home||"", g.fav||"h", (g.spread===""||g.spread==null)?"":g.spread, g.kick||""]
@@ -345,7 +347,7 @@ function decodeCard(s){
     var parts = b64urlDecode(s).split("|");
     var head = parts.shift().split("~");
     return {
-      week: head[0]||"", due: head[1]||"", tb: head[2]||"", ep: head[3]||"",
+      week: head[0]||"", due: head[1]||"", ep: head[3]||"",
       games: parts.filter(Boolean).map(function(r){
         var f = r.split("~");
         return { away:f[0]||"", home:f[1]||"", fav:(f[2]==="a"?"a":"h"), spread:f[3]||"", kick:f[4]||"" };
@@ -354,25 +356,136 @@ function decodeCard(s){
   }catch(e){ return null; }
 }
 
-/* ---------------- default card (real Week 4 matchups, lines as of 9/15) ---------------- */
-var DEFAULT_CARD = {
-  week: "Week 4",
-  due: "",
-  tb: "Total points in Miami at Wake Forest",
-  games: [
-    { away:"Miami",            home:"Wake Forest", fav:"a", spread:"21",  kick:"Fri 7:30 ET" },
-    { away:"Houston",          home:"Texas Tech",  fav:"h", spread:"7.5", kick:"Fri 8:00 ET" },
-    { away:"Coastal Carolina", home:"Delaware",    fav:"h", spread:"5",   kick:"Sat 11:30 ET" },
-    { away:"Buffalo",          home:"Penn State",  fav:"h", spread:"",    kick:"Sat 4:00 ET" },
-    { away:"North Carolina",   home:"Clemson",     fav:"h", spread:"",    kick:"Sat 4:00 ET" },
-    { away:"Portland State",   home:"Oregon",      fav:"h", spread:"",    kick:"Sat" }
-  ]
-};
+/* ---------------- empty card — the builder below fills it ---------------- */
+var DEFAULT_CARD = { week: "", due: "", games: [] };
+
+/* ---------------- automatic card builder ---------------- */
+var SLATE_URL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard";
+var CARD_SIZE = 10;
+// ESPN team ids for the five that always make the card
+var ANCHORS = { "245":1, "99":1, "201":1, "248":1, "8":1 };   // Texas A&M, LSU, Oklahoma, Houston, Arkansas
+// ESPN conference ids for the Power 4
+var POWER4 = { "1":1, "4":1, "5":1, "8":1 };                  // ACC, Big 12, Big Ten, SEC
+// Counted as Power 4 despite the conference id — the independents share id 18 with UConn
+var POWER4_TEAMS = { "87":1 };                                // Notre Dame
+var TOP25 = 25;
+
+function kickLabel(iso){
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  try{
+    return d.toLocaleString("en-US", { timeZone:"America/New_York", weekday:"short",
+             hour:"numeric", minute:"2-digit" }).replace(",", "") + " ET";
+  }catch(e){ return ""; }
+}
+function dueLocal(iso){
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  function pad(n){ return (n<10?"0":"") + n; }
+  return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) +
+         "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+function sideOf(comp, which){
+  var a = comp.competitors || [];
+  for (var i=0;i<a.length;i++) if (a[i].homeAway === which) return a[i];
+  return null;
+}
+function rankOf(t){
+  var r = t && t.curatedRank && t.curatedRank.current;
+  return (typeof r === "number" && r > 0 && r <= TOP25) ? r : 99;
+}
+function normalizeEvent(e){
+  var c = (e.competitions || [])[0]; if (!c) return null;
+  var a = sideOf(c,"away"), h = sideOf(c,"home");
+  if (!a || !h || !a.team || !h.team) return null;
+  var od = (c.odds || [])[0], spread = "", fav = "h";
+  if (od && od.spread != null && isFinite(Number(od.spread))){
+    spread = String(Math.abs(Number(od.spread)));
+    if (od.homeTeamOdds && od.homeTeamOdds.favorite) fav = "h";
+    else if (od.awayTeamOdds && od.awayTeamOdds.favorite) fav = "a";
+    else fav = Number(od.spread) > 0 ? "a" : "h";   // ESPN signs the spread against the home team
+  }
+  return {
+    id: String(e.id), date: e.date || "",
+    away: a.team.location || a.team.displayName || "",
+    home: h.team.location || h.team.displayName || "",
+    awayId: String(a.team.id), homeId: String(h.team.id),
+    awayConf: String(a.team.conferenceId || ""), homeConf: String(h.team.conferenceId || ""),
+    awayRank: rankOf(a), homeRank: rankOf(h),
+    awayP4: isP4(a.team), homeP4: isP4(h.team),
+    spread: spread, fav: fav, kick: kickLabel(e.date)
+  };
+}
+function isP4(team){
+  return POWER4[String(team.conferenceId || "")] === 1 || POWER4_TEAMS[String(team.id)] === 1;
+}
+function isRanked(rank){ return rank <= TOP25; }
+function spreadOf(g){
+  if (g.spread === "" || g.spread == null) return null;
+  var n = Math.abs(parseFloat(g.spread));
+  return isFinite(n) ? n : null;
+}
+function bySpread(x,y){ return spreadOf(x) - spreadOf(y); }
+function byKick(x,y){ return x.date < y.date ? -1 : (x.date > y.date ? 1 : 0); }
+
+// The five anchors first, then the priority rules, then chronological order.
+function selectGames(all){
+  var out = [], used = {};
+  function take(g){
+    if (!g || used[g.id] || out.length >= CARD_SIZE) return;
+    used[g.id] = 1; out.push(g);
+  }
+  function fill(list){ list.forEach(take); }
+
+  fill(all.filter(function(g){ return ANCHORS[g.awayId] === 1 || ANCHORS[g.homeId] === 1; }).sort(byKick));
+
+  // 1. two ranked teams, whatever the line
+  fill(all.filter(function(g){ return !used[g.id] && isRanked(g.awayRank) && isRanked(g.homeRank); })
+          .sort(function(x,y){ return (x.awayRank + x.homeRank) - (y.awayRank + y.homeRank); }));
+
+  // 2. a ranked team against a Power 4 opponent, inside ten points
+  fill(all.filter(function(g){
+         if (used[g.id]) return false;
+         var s = spreadOf(g);
+         if (s == null || s >= 10) return false;
+         return (isRanked(g.awayRank) && g.homeP4) || (isRanked(g.homeRank) && g.awayP4);
+       }).sort(bySpread));
+
+  // 3. closest spread between Power 4 teams
+  fill(all.filter(function(g){
+         return !used[g.id] && spreadOf(g) != null && g.awayP4 && g.homeP4;
+       }).sort(bySpread));
+
+  // bye weeks can leave the card short — closest remaining line on the board
+  fill(all.filter(function(g){ return !used[g.id] && spreadOf(g) != null; }).sort(bySpread));
+
+  return out.sort(byKick);
+}
+function buildFromSlate(weekNo){
+  var url = SLATE_URL + "?groups=80&limit=400" +
+            (weekNo ? "&seasontype=2&week=" + encodeURIComponent(weekNo) : "");
+  return fetch(url, { cache:"no-store" })
+    .then(function(r){ if (!r.ok) throw new Error("slate " + r.status); return r.json(); })
+    .then(function(d){
+      var picked = selectGames((d.events || []).map(normalizeEvent).filter(Boolean));
+      if (!picked.length) throw new Error("no games on the slate");
+      var wk = (d.week && d.week.number) || weekNo || null;
+      return {
+        week: wk ? ("Week " + wk) : "The Card",
+        due: picked[0] ? dueLocal(picked[0].date) : "",
+        ep: (card && card.ep) || "",
+        auto: true, weekNo: wk,
+        games: picked.map(function(g){
+          return { away:g.away, home:g.home, fav:g.fav, spread:g.spread, kick:g.kick };
+        })
+      };
+    });
+}
 
 /* ---------------- state ---------------- */
-var card = null, picks = {}, tie = null;
+var card = null, picks = {};
 var grades = {};           // gameIndex -> "a" | "h" | "push"
-var entries = [];          // {name, picks:[], tie}
+var entries = [];          // {name, picks:[]}
 var cardKey = "";
 
 function loadCard(){
@@ -386,7 +499,7 @@ function liveGames(){
   return (card.games||[]).filter(function(g){ return g.away.trim() && g.home.trim(); });
 }
 function keyForCard(){
-  return "pickem.rd." + encodeCard({week:card.week,due:"",tb:"",games:liveGames()}).slice(0,40);
+  return "pickem.rd." + encodeCard({week:card.week,due:"",games:liveGames()}).slice(0,40);
 }
 
 /* ---------------- tiny dom helpers ---------------- */
@@ -464,9 +577,6 @@ function renderPicks(){
     list.appendChild(li);
   });
 
-  if (card.tb){ $("tbWrap").classList.remove("hide"); $("tbQ").textContent = card.tb; }
-  else $("tbWrap").classList.add("hide");
-
   var made = gs.filter(function(_,i){ return picks[i]; }).length;
   var done = made === gs.length && gs.length > 0;
   $("progress").innerHTML = done
@@ -495,7 +605,6 @@ function payload(){
   return {
     week: card.week || "Card",
     name: ($("who").value || "").trim() || "Anonymous",
-    tie: ($("tbVal").value || "").trim() === "" ? null : Number($("tbVal").value),
     picks: gs.map(function(g,i){ return picks[i] === "a" ? g.away : g.home; })
   };
 }
@@ -534,10 +643,7 @@ function picksText(){
   var gs = liveGames();
   var name = ($("who").value || "").trim() || "Anonymous";
   var teams = gs.map(function(g,i){ return picks[i]==="a" ? g.away : g.home; });
-  var s = (card.week ? card.week.toUpperCase() : "PICKS") + " — " + name + "\n" + teams.join(", ");
-  var tb = ($("tbVal").value || "").trim();
-  if (card.tb && tb) s += " · TB " + tb;
-  return s;
+  return (card.week ? card.week.toUpperCase() : "PICKS") + " — " + name + "\n" + teams.join(", ");
 }
 
 /* ---------------- PARSING PASTED PICKS ---------------- */
@@ -575,17 +681,15 @@ function parsePaste(raw){
     if (looksLikeHeader && nameMatch){
       flush();
       var nm = nameMatch[1].replace(/^[^A-Za-z]*/,"").replace(/\b(week\s*\d+|card|picks|w\d+)\b/gi,"").replace(/[—–\-:]/g,"").trim();
-      cur = { name: nm || "Someone", tokens: [], tie: null, raw: line };
+      cur = { name: nm || "Someone", tokens: [], raw: line };
       var rest = nameMatch[2].trim();
       if (rest) absorb(rest);
       return;
     }
-    if (!cur) { cur = { name:"", tokens:[], tie:null, raw:line }; }
+    if (!cur) { cur = { name:"", tokens:[], raw:line }; }
     absorb(line);
   });
   function absorb(s){
-    var tbm = s.match(/(?:tb|tiebreak(?:er)?)\s*[:\s]\s*(\d{1,3})/i);
-    if (tbm){ cur.tie = parseInt(tbm[1],10); s = s.replace(tbm[0],""); }
     if (!cur.name){
       var nm = s.match(/^([A-Za-z][A-Za-z .'\-]{0,23})\s*[—–:\-]\s*(.+)$/);
       if (nm){ cur.name = nm[1].trim(); s = nm[2]; }
@@ -615,7 +719,7 @@ function parsePaste(raw){
         else unknown.push(tk);
       }
     });
-    return { name: (p.name||"Someone").slice(0,24), picks: chosen, tie: p.tie, unknown: unknown, count: chosen.filter(Boolean).length };
+    return { name: (p.name||"Someone").slice(0,24), picks: chosen, unknown: unknown, count: chosen.filter(Boolean).length };
   }).filter(function(p){ return p.count > 0; });
 }
 
@@ -636,26 +740,26 @@ function renderEditor(){
     hdr.appendChild(el("span","num", String(i+1)));
     hdr.appendChild(el("span","kick", g.away && g.home ? g.away + " at " + g.home : "empty slot"));
     var clr = el("button","clr","remove"); clr.type="button";
-    clr.addEventListener("click", function(){ card.games.splice(i,1); commitCard(); });
+    clr.addEventListener("click", function(){ card.games.splice(i,1); handEdited(); commitCard(); });
     hdr.appendChild(clr);
     row.appendChild(hdr);
 
     var g2 = el("div","grid2");
-    g2.appendChild(field("Away team", g.away, function(v){ g.away=v; commitCard(true); }, "text"));
-    g2.appendChild(field("Home team", g.home, function(v){ g.home=v; commitCard(true); }, "text"));
+    g2.appendChild(field("Away team", g.away, function(v){ g.away=v; handEdited(); commitCard(true); }, "text"));
+    g2.appendChild(field("Home team", g.home, function(v){ g.home=v; handEdited(); commitCard(true); }, "text"));
     row.appendChild(g2);
 
     var g3 = el("div","grid2");
-    g3.appendChild(field("Spread", g.spread, function(v){ g.spread=v; commitCard(true); }, "text", "7.5"));
-    g3.appendChild(field("Kickoff", g.kick, function(v){ g.kick=v; commitCard(true); }, "text", "Sat 3:30 ET"));
+    g3.appendChild(field("Spread", g.spread, function(v){ g.spread=v; handEdited(); commitCard(true); }, "text", "7.5"));
+    g3.appendChild(field("Kickoff", g.kick, function(v){ g.kick=v; handEdited(); commitCard(true); }, "text", "Sat 3:30 ET"));
     row.appendChild(g3);
 
     var fp = el("div","favpick");
-    fp.appendChild(el("span","tb-q","Favorite:"));
+    fp.appendChild(el("span","inline-lbl","Favorite:"));
     [["a", g.away||"away"],["h", g.home||"home"]].forEach(function(o){
       var b = el("button",null,o[1]); b.type="button";
       b.setAttribute("aria-pressed", g.fav===o[0] ? "true":"false");
-      b.addEventListener("click", function(){ g.fav=o[0]; commitCard(); });
+      b.addEventListener("click", function(){ g.fav=o[0]; handEdited(); commitCard(); });
       fp.appendChild(b);
     });
     row.appendChild(fp);
@@ -695,7 +799,6 @@ function renderEntrants(){
     var head = el("div"); 
     head.appendChild(el("strong",null,e.name));
     head.appendChild(el("span","chip", e.count + "/" + gs.length + " picks"));
-    if (e.tie != null) head.appendChild(el("span","chip","TB " + e.tie));
     (e.unknown||[]).forEach(function(u){ head.appendChild(el("span","chip bad","? " + u)); });
     var rm = el("button","clr"," remove"); rm.type="button"; rm.style.cssText="background:none;border:0;color:#A8322A;font-size:12px;cursor:pointer;text-decoration:underline;margin-left:6px";
     rm.addEventListener("click", function(){ entries.splice(i,1); saveRound(); renderEntrants(); renderBoard(); });
@@ -752,11 +855,11 @@ function renderBoard(){
     box.appendChild(el("div","empty", !entries.length ? "" : "Tap the winners above to build the leaderboard."));
     renderConsensus(); return;
   }
-  var rows = entries.map(function(e){ return { name:e.name, score:scoreOf(e), tie:e.tie }; })
+  var rows = entries.map(function(e){ return { name:e.name, score:scoreOf(e) }; })
                     .sort(function(a,b){ return b.score - a.score; });
   var t = el("table");
   var thead = el("thead"), tr = el("tr");
-  ["","Player","Record","TB"].forEach(function(h,i){ var th=el("th", i===2?"n":null, h); tr.appendChild(th); });
+  ["","Player","Record"].forEach(function(h,i){ var th=el("th", i===2?"n":null, h); tr.appendChild(th); });
   thead.appendChild(tr); t.appendChild(thead);
   var tb = el("tbody");
   rows.forEach(function(r, i){
@@ -764,7 +867,6 @@ function renderBoard(){
     row.appendChild(el("td","rk", String(i+1)));
     row.appendChild(el("td",null,r.name));
     row.appendChild(el("td","n", r.score + "–" + (graded - r.score)));
-    row.appendChild(el("td",null, r.tie==null ? "—" : String(r.tie)));
     tb.appendChild(row);
   });
   t.appendChild(tb); box.appendChild(t);
@@ -844,7 +946,6 @@ function show(which){
   if (which === "commish"){
     $("cWeek").value = card.week || "";
     $("cDue").value = card.due || "";
-    $("cTb").value = card.tb || "";
     $("cEp").value = card.ep || "";
     commitCard();
     renderEntrants(); renderSeason();
@@ -854,8 +955,39 @@ function show(which){
 }
 
 /* ---------------- wire up ---------------- */
+function fromLink(){ return /c=[A-Za-z0-9\-_]+/.test(location.hash); }
+
+function setAutoStatus(msg){ var n = $("autoStatus"); if (n) n.textContent = msg; }
+
+// Pull the slate, apply the selection rules, and take over the card.
+function runBuilder(weekNo){
+  setAutoStatus("Reading the slate…");
+  if (!liveGames().length) $("weekSub").textContent = "Building this week's card…";
+  return buildFromSlate(weekNo).then(function(built){
+    card = built;
+    picks = {};
+    lsSet("pickem.card", JSON.stringify(card));
+    cardKey = keyForCard(); loadRound();
+    setAutoStatus(built.games.length + " games picked for " + built.week.toLowerCase() + ".");
+    if (!$("view-commish").classList.contains("hide")) show("commish"); else renderPicks();
+    return built;
+  }).catch(function(err){
+    setAutoStatus("Couldn't reach the slate — set the games by hand below.");
+    if (!liveGames().length){
+      $("weekSub").textContent = "Couldn't reach the live slate. Commissioner tools can set the card by hand.";
+    }
+    throw err;
+  });
+}
+
 card = loadCard();
 loadRound();
+
+$("autoBuild").addEventListener("click", function(){
+  var wk = ($("cWeekNo").value || "").trim();
+  runBuilder(wk ? Number(wk) : null).then(function(){ toast("Card rebuilt"); },
+                                          function(){ toast("Slate's unreachable right now"); });
+});
 
 var savedName = lsGet("pickem.name");
 if (savedName) $("who").value = savedName;
@@ -869,9 +1001,9 @@ $("copyPicks").addEventListener("click", function(){ copyText(picksText(), "Pick
 $("toCommish").addEventListener("click", function(){ show("commish"); });
 $("toPicks").addEventListener("click", function(){ show("picks"); });
 
-$("cWeek").addEventListener("input", function(){ card.week = $("cWeek").value; commitCard(true); });
-$("cDue").addEventListener("input", function(){ card.due = $("cDue").value; commitCard(true); });
-$("cTb").addEventListener("input", function(){ card.tb = $("cTb").value; commitCard(true); });
+function handEdited(){ card.auto = false; }
+$("cWeek").addEventListener("input", function(){ card.week = $("cWeek").value; handEdited(); commitCard(true); });
+$("cDue").addEventListener("input", function(){ card.due = $("cDue").value; handEdited(); commitCard(true); });
 $("cEp").addEventListener("input", function(){ card.ep = $("cEp").value.trim(); commitCard(true); });
 
 $("pullSheet").addEventListener("click", function(){
@@ -890,7 +1022,7 @@ $("pullSheet").addEventListener("click", function(){
           var side = matchSide(tk, gs[i]);
           if (side) chosen[i] = side; else unknown.push(tk);
         });
-        return { name:String(row.name||"Someone").slice(0,24), picks:chosen, tie:(row.tie===""||row.tie==null)?null:row.tie,
+        return { name:String(row.name||"Someone").slice(0,24), picks:chosen,
                  unknown:unknown, count:chosen.filter(Boolean).length };
       }).filter(function(p){ return p.count > 0; });
       if (!found.length){ toast("Sheet's empty for this card"); return; }
@@ -904,7 +1036,7 @@ $("submitSheet").addEventListener("click", submitToSheet);
 
 $("addGame").addEventListener("click", function(){
   card.games.push({ away:"", home:"", fav:"h", spread:"", kick:"" });
-  commitCard();
+  handEdited(); commitCard();
 });
 $("copyLink").addEventListener("click", function(){ copyText($("shareLink").textContent, "Link copied"); });
 $("previewCard").addEventListener("click", function(){
@@ -942,6 +1074,12 @@ $("importSeason").addEventListener("click", function(){
 });
 
 show("picks");
+
+// A card that came from a link is frozen. A hand-built one is the commissioner's.
+// Anything else builds itself from this week's slate.
+if (!fromLink() && card.auto !== false){
+  runBuilder(null).catch(function(){});
+}
 })();
 </script>
 </body>
