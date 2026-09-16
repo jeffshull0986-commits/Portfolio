@@ -1048,15 +1048,19 @@ function loadSeason(){
     .then(function(r){ return r.json(); })
     .then(function(res){
       if (!res || !res.season) throw new Error("no season");
+      if (!(res.season.weeks || []).length){
+        var mine = localSeason("empty");
+        if (mine.weeks.length) return renderSeason(mine);   // the sheet has none, this browser does
+      }
       renderSeason(res.season);
     })
-    .catch(function(){ renderSeason(localSeason()); });
+    .catch(function(){ renderSeason(localSeason("offline")); });
 }
 function getSeason(){ try{ return JSON.parse(lsGet("pickem.season")||"{}"); }catch(e){ return {}; } }
 function setSeason(s){ lsSet("pickem.season", JSON.stringify(s)); }
 
 // The sheet is the season. This only runs when it can't be reached.
-function localSeason(){
+function localSeason(why){
   var s = getSeason(), weeks = Object.keys(s), tot = {};
   weeks.forEach(function(w){
     s[w].forEach(function(r){
@@ -1064,7 +1068,7 @@ function localSeason(){
       tot[r.name].w += r.score; tot[r.name].l += (r.of - r.score); tot[r.name].weeks++;
     });
   });
-  return { weeks: weeks, players: Object.keys(tot).map(function(n){ return tot[n]; }), skipped: 0, local: true };
+  return { weeks: weeks, players: Object.keys(tot).map(function(n){ return tot[n]; }), skipped: 0, local: why || "offline" };
 }
 
 function renderSeason(season){
@@ -1076,7 +1080,7 @@ function renderSeason(season){
   }
   var weeks = season.weeks || [];
   if (!weeks.length){
-    box.appendChild(el("div","empty", season.local
+    box.appendChild(el("div","empty", season.local === "offline"
       ? "Couldn't reach the sheet, and this browser has no copy of the season."
       : "No weeks banked yet."));
     return;
@@ -1099,7 +1103,8 @@ function renderSeason(season){
   t.appendChild(tb); box.appendChild(t);
   var bits = [weeks.length + " week" + (weeks.length>1?"s":"") + " banked: " + weeks.join(", ")];
   if (season.skipped) bits.push(season.skipped + " card(s) left out for being against different games");
-  if (season.local) bits.push("from this browser's copy — the sheet couldn't be reached");
+  if (season.local === "offline") bits.push("from this browser's copy — the sheet couldn't be reached");
+  if (season.local === "empty") bits.push("from this browser's copy — the sheet has nothing banked yet, so import it to share it");
   box.appendChild(el("div","empty", bits.join(" · ")));
 }
 
@@ -1368,8 +1373,36 @@ $("exportSeason").addEventListener("click", function(){
 $("importSeason").addEventListener("click", function(){
   var txt = prompt("Paste a ledger export:");
   if (!txt) return;
-  try{ var p = JSON.parse(txt); setSeason(p); renderSeason(localSeason()); toast("Ledger imported"); }
-  catch(e){ toast("That wasn't a valid ledger"); }
+  var parsed;
+  try{ parsed = JSON.parse(txt); }catch(e){ toast("That wasn't a valid ledger"); return; }
+  if (!parsed || typeof parsed !== "object"){ toast("That wasn't a valid ledger"); return; }
+
+  setSeason(parsed);
+
+  var rows = [];
+  Object.keys(parsed).forEach(function(w){
+    (parsed[w] || []).forEach(function(r){
+      var won = Number(r.score) || 0, of = Number(r.of) || 0;
+      if (!r.name) return;
+      rows.push({ week: w, name: String(r.name), w: won, l: Math.max(0, of - won) });
+    });
+  });
+
+  var url = endpoint();
+  if (!url || !rows.length){ renderSeason(localSeason("empty")); toast("Ledger imported on this browser"); return; }
+
+  fetch(url, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+               body: JSON.stringify({ action:"ledger", ledger: rows }) })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res || res.ok === false || !res.season) throw new Error("refused");
+      renderSeason(res.season);
+      toast("Ledger imported to the sheet — every device sees it now");
+    })
+    .catch(function(){
+      renderSeason(localSeason("empty"));
+      toast("Imported here only — the sheet wouldn't take it");
+    });
 });
 
 applyCommishDoor();
