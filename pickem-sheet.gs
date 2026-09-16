@@ -17,16 +17,18 @@
  * If you ever edit this file, you have to Deploy → Manage deployments →
  * edit → New version, or the live URL keeps running the old code.
  *
- * Four tabs, made as needed:
+ * Five tabs, made as needed:
  *   Picks    one row per player per card, newest submission wins
  *   Cards    the card each week's picks are supposed to be against
  *   Results  which side covered, per card — the season is added up from this
+ *   Ledger   weeks carried in from before the sheet kept the season
  *   Log      what went wrong, and what went right after going wrong
  */
 
 var SHEET_NAME = 'Picks';
 var CARDS_NAME = 'Cards';
 var RESULTS_NAME = 'Results';
+var LEDGER_NAME = 'Ledger';
 var LOG_NAME   = 'Log';
 var MAX_GAMES  = 12;
 var LOG_LIMIT  = 300;   // rows handed back to the commissioner's Trouble panel
@@ -45,6 +47,7 @@ function doPost(e) {
     var action = String(data.action || 'picks');
     if (action === 'register') return registerCard_(data);
     if (action === 'results')  return storeResults_(data);
+    if (action === 'ledger')   return storeLedger_(data);
     return storePicks_(data);
   } catch (err) {
     log_('error', '', '', 'could not read the submission: ' + err, '', '');
@@ -138,17 +141,55 @@ function graded_(grades) {
   return n;
 }
 
+/** Weeks played before the sheet kept score, carried in from an exported ledger. */
+function storeLedger_(data) {
+  var rows = data.ledger || [];
+  if (!rows.length) return json_({ ok: false, error: 'nothing to import' });
+
+  var sh = ledgerSheet_();
+  var weeks = {};
+  rows.forEach(function (r) { if (String(r.week || '').trim()) weeks[String(r.week).trim().toLowerCase()] = 1; });
+
+  // an import replaces those weeks rather than stacking onto them
+  if (sh.getLastRow() >= 2) {
+    var have = sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues();
+    for (var i = have.length - 1; i >= 0; i--) {
+      if (weeks[String(have[i][0]).trim().toLowerCase()]) sh.deleteRow(i + 2);
+    }
+  }
+  var added = 0;
+  rows.forEach(function (r) {
+    var week = String(r.week || '').trim(), name = String(r.name || '').trim();
+    if (!week || !name) return;
+    sh.appendRow([week, name, Number(r.w) || 0, Number(r.l) || 0, new Date()]);
+    added++;
+  });
+  log_('info', '', '', 'carried in ' + added + ' row(s) across ' + Object.keys(weeks).length + ' week(s)', '', '');
+  return json_({ ok: true, added: added, season: season_() });
+}
+
+function allLedger_() {
+  var sh = ledgerSheet_();
+  if (sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues()
+    .filter(function (r) { return String(r[0]).trim() && String(r[1]).trim(); })
+    .map(function (r) {
+      return { week: String(r[0]).trim(), name: String(r[1]).trim(), w: Number(r[2]) || 0, l: Number(r[3]) || 0 };
+    });
+}
+
 /** Adds up every banked card. No browser holds any of this. */
 function season_() {
-  var results = allResults_();
-  if (!results.length) return { weeks: [], players: [], skipped: 0 };
+  var results = allResults_(), ledger = allLedger_();
+  if (!results.length && !ledger.length) return { weeks: [], players: [], skipped: 0 };
 
-  var picks = allPicks_(), players = {}, weeks = [], skipped = 0;
+  var picks = allPicks_(), players = {}, weeks = [], skipped = 0, graded = {};
 
   results.forEach(function (r) {
     var card = reference_(r.week);
     if (!card.games.length) return;          // no game list, so a/h means nothing
     weeks.push(r.week);
+    graded[r.week.toLowerCase()] = 1;
 
     picks.forEach(function (p) {
       if (String(p.week).trim().toLowerCase() !== r.week.toLowerCase()) return;
@@ -167,6 +208,14 @@ function season_() {
       if (!players[name]) players[name] = { name: name, w: 0, l: 0, weeks: 0 };
       players[name].w += w; players[name].l += l; players[name].weeks++;
     });
+  });
+
+  // carried-in weeks count too, unless this sheet graded that week itself
+  ledger.forEach(function (r) {
+    if (graded[r.week.toLowerCase()]) return;
+    if (weeks.indexOf(r.week) === -1) weeks.push(r.week);
+    if (!players[r.name]) players[r.name] = { name: r.name, w: 0, l: 0, weeks: 0 };
+    players[r.name].w += r.w; players[r.name].l += r.l; players[r.name].weeks++;
   });
 
   var rows = Object.keys(players).map(function (k) { return players[k]; });
@@ -326,6 +375,7 @@ function picksSheet_() {
 }
 function cardsSheet_()   { return sheet_(CARDS_NAME, ['Card', 'Card id', 'Games', 'Registered', 'By']); }
 function resultsSheet_() { return sheet_(RESULTS_NAME, ['Card', 'Who covered', 'Banked', 'Card id']); }
+function ledgerSheet_()  { return sheet_(LEDGER_NAME,  ['Card', 'Player', 'Won', 'Lost', 'Carried in']); }
 function logSheet_()   { return sheet_(LOG_NAME,   ['When', 'Level', 'Card', 'Player', 'What happened', 'Card id']); }
 
 function sheet_(name, head) {
