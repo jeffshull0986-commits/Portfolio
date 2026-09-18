@@ -189,6 +189,7 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
 .bar{height:6px;background:var(--stock-2);border-radius:99px;overflow:hidden;margin-top:3px}
 .bar i{display:block;height:100%;background:var(--ink)}
 .consensus-row{padding:9px 0;border-bottom:1px solid var(--rule);font-size:13.5px}
+.cons-line{font-size:11.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
 .logrow{padding:8px 0;border-bottom:1px solid var(--rule);font-size:13px;display:flex;gap:9px;align-items:baseline}
 .logrow .when{font-size:11px;color:var(--ink-soft);white-space:nowrap;font-variant-numeric:tabular-nums}
 .logrow .lvl{font-family:'Oswald',sans-serif;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
@@ -201,7 +202,7 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
 .cons-sides{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
 .cons-side{min-width:0}
 .cons-team{display:flex;align-items:baseline;gap:6px}
-.cons-count{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp)}
+.cons-count{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);margin-left:auto;padding-left:8px}
 .cons-who{font-size:11px;line-height:1.35;color:var(--ink-soft);overflow-wrap:break-word;margin-top:1px}
 .cons-who.none{opacity:.55}
 .hide{display:none !important}
@@ -1019,10 +1020,13 @@ function renderConsensus(){
     var tot = away.length + home.length; if (!tot) return;
     var row = el("div","consensus-row");
     var sides = el("div","cons-sides");
-    [[g.away, away], [g.home, home]].forEach(function(o){
+    [[g.away, away, "a"], [g.home, home, "h"]].forEach(function(o){
       var side = el("div","cons-side");
       var head = el("div","cons-team");
       head.appendChild(el("span",null,o[0]));
+      // the number sits with the side laying it, so the card reads back the way it was played
+      var line = o[2] === (g.fav || "h") ? lineFor(g, o[2]) : "";
+      if (line && line !== "line TBD") head.appendChild(el("span","cons-line", line));
       head.appendChild(el("span","cons-count", String(o[1].length)));
       side.appendChild(head);
       var who = el("div","cons-who", o[1].length
