@@ -631,6 +631,7 @@ function renderPicks(){
       b.addEventListener("click", function(){
         picks[i] = (picks[i] === slot) ? null : slot;
         submitted = false;
+        savePicks();
         renderPicks();
       });
       mu.appendChild(b);
@@ -661,6 +662,48 @@ function renderPicks(){
 }
 
 var submitting = false, submitted = false, sheetFailed = false;
+
+/* Half a card is easy to lose to a closed tab or a phone going to sleep, so
+   the taps are kept on the player's own device, under the card they belong
+   to. Nothing here ever leaves the browser. */
+var MINE = "pickem.my.";
+var MINE_KEEP = 8;
+function myKey(){ return MINE + fingerprint(); }
+function savePicks(){
+  var gs = liveGames(), mine = [];
+  gs.forEach(function(_, i){ mine[i] = picks[i] || ""; });
+  lsSet(myKey(), JSON.stringify({ picks: mine, submitted: submitted, at: Date.now() }));
+  pruneMine();
+}
+function loadPicks(){
+  picks = {}; submitted = false;
+  var raw = lsGet(myKey());
+  if (!raw) return;
+  try{
+    var o = JSON.parse(raw);
+    (o.picks || []).forEach(function(v, i){ if (v === "a" || v === "h") picks[i] = v; });
+    submitted = !!o.submitted;
+  }catch(e){}
+}
+// keep the last few cards, not every card ever played
+function pruneMine(){
+  try{
+    var keys = [];
+    for (var i = 0; i < localStorage.length; i++){
+      var k = localStorage.key(i);
+      if (k && k.indexOf(MINE) === 0) keys.push(k);
+    }
+    if (keys.length <= MINE_KEEP) return;
+    keys.map(function(k){
+      var at = 0;
+      try{ at = (JSON.parse(lsGet(k)) || {}).at || 0; }catch(e){}
+      return { k: k, at: at };
+    })
+    .sort(function(a, b){ return a.at - b.at; })
+    .slice(0, keys.length - MINE_KEEP)
+    .forEach(function(o){ try{ localStorage.removeItem(o.k); }catch(e){} });
+  }catch(e){}
+}
 
 /* Which card this is. Matchups only — a line that moved is the same card, a
    different game is not. */
@@ -740,7 +783,7 @@ function submitToSheet(){
 
   // text/plain keeps this a simple request, so no preflight to fail on
   function landed(res){
-    submitting = false; submitted = true; renderPicks();
+    submitting = false; submitted = true; savePicks(); renderPicks();
     toast(res && res.flagged
       ? "Card's in — but it isn't the card the commissioner registered"
       : "Card's in");
@@ -1180,9 +1223,8 @@ function runBuilder(weekNo){
   if (!liveGames().length) $("weekSub").textContent = "Building this week's card…";
   return buildFromSlate(weekNo).then(function(built){
     card = built;
-    picks = {};
     lsSet("pickem.card", JSON.stringify(card));
-    cardKey = keyForCard(); loadRound();
+    cardKey = keyForCard(); loadRound(); loadPicks();
     setAutoStatus(built.games.length + " games picked for " + built.week.toLowerCase() + ".");
     if (!$("view-commish").classList.contains("hide")) show("commish"); else renderPicks();
     return built;
@@ -1197,6 +1239,7 @@ function runBuilder(weekNo){
 
 card = loadCard();
 loadRound();
+loadPicks();
 
 $("autoBuild").addEventListener("click", function(){
   var wk = ($("cWeekNo").value || "").trim();
@@ -1330,7 +1373,7 @@ $("sendCardTg").addEventListener("click", function(){
               "_blank", "noopener");
 });
 $("previewCard").addEventListener("click", function(){
-  cardKey = keyForCard(); picks = {}; show("picks");
+  cardKey = keyForCard(); loadPicks(); show("picks");
 });
 
 $("parseBtn").addEventListener("click", function(){
