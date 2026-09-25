@@ -685,6 +685,44 @@ function loadPicks(){
     submitted = !!o.submitted;
   }catch(e){}
 }
+function pickedCount(){
+  var n = 0;
+  liveGames().forEach(function(_, i){ if (picks[i]) n++; });
+  return n;
+}
+
+/* Local saving only knows about taps made since it existed. A card turned in
+   from another phone — or before any of this was written — is still in the
+   sheet, so fetch it back by name rather than showing ten blank games. */
+function restoreFromSheet(){
+  var url = endpoint(), gs = liveGames(), name = ($("who").value || "").trim();
+  if (!url || !gs.length || !name || pickedCount()) return;
+  fetch(url + (url.indexOf("?")>-1 ? "&" : "?") + "week=" + encodeURIComponent(card.week || ""))
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (pickedCount()) return;                     // they started picking while we asked
+      var mine = null;
+      (res && res.entries || []).forEach(function(e){
+        if (norm(e.name) === norm(name)) mine = e;
+      });
+      if (!mine) return;
+      var got = 0;
+      (mine.picks || []).forEach(function(tk, i){
+        if (i >= gs.length) return;
+        var side = matchSide(tk, gs[i]);
+        if (side){ picks[i] = side; got++; }
+      });
+      if (!got) return;
+      submitted = true;
+      savePicks();
+      renderPicks();
+      toast(got === gs.length
+        ? "Found your card in the sheet"
+        : "Found " + got + " of your picks in the sheet");
+    })
+    .catch(function(){ /* offline is not worth a message here */ });
+}
+
 // keep the last few cards, not every card ever played
 function pruneMine(){
   try{
@@ -1227,6 +1265,7 @@ function runBuilder(weekNo){
     cardKey = keyForCard(); loadRound(); loadPicks();
     setAutoStatus(built.games.length + " games picked for " + built.week.toLowerCase() + ".");
     if (!$("view-commish").classList.contains("hide")) show("commish"); else renderPicks();
+    restoreFromSheet();
     return built;
   }).catch(function(err){
     setAutoStatus("Couldn't reach the slate — set the games by hand below.");
@@ -1249,7 +1288,13 @@ $("autoBuild").addEventListener("click", function(){
 
 var savedName = lsGet("pickem.name");
 if (savedName) $("who").value = savedName;
-$("who").addEventListener("input", function(){ lsSet("pickem.name", $("who").value); });
+
+var nameTimer;
+$("who").addEventListener("input", function(){
+  lsSet("pickem.name", $("who").value);
+  clearTimeout(nameTimer);
+  nameTimer = setTimeout(restoreFromSheet, 700);   // a name they just typed may have a card waiting
+});
 
 $("sendTg").addEventListener("click", function(){
   var txt = picksText();
@@ -1455,6 +1500,7 @@ $("importSeason").addEventListener("click", function(){
 applyCommishDoor();
 show("picks");
 flushOutbox();
+restoreFromSheet();
 
 // A card that came from a link is frozen. A hand-built one is the commissioner's.
 // Anything else builds itself from this week's slate.
