@@ -290,8 +290,6 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
       <h2>Send picks to a spreadsheet</h2>
       <p class="note">Cards turn in straight to the sheet — the web app URL is built into the page, so it is not part of the share link and there is nothing to re-enter. Paste a different URL here to point this browser somewhere else; clear the box to go back to the built-in one.</p>
       <div class="field"><span>Web app URL</span><input type="text" id="cEp" placeholder="https://script.google.com/macros/s/…/exec"></div>
-      <button class="btn ghost" id="pullSheet">Pull this week's picks from the sheet</button>
-      <div style="height:9px"></div>
       <button class="btn ghost" id="registerCard">Register this as the official card</button>
       <p class="note" id="regStatus" style="margin:9px 0 0"></p>
     </section>
@@ -304,12 +302,17 @@ td.rk{font-family:'Oswald',sans-serif;font-weight:600;color:var(--stamp);width:2
     </section>
 
     <section class="panel">
-      <h2>Collect the picks</h2>
-      <p class="note">Paste everything the group posted — all of it at once is fine. One entry per person; a repeat name overwrites the old one.</p>
+      <h2>Who's in</h2>
+      <p class="note">Read straight from the sheet, and again every so often while this is open, so a card turned in again replaces the old one on its own. The leaderboard and the room below both come from this same read.</p>
+      <button class="btn ghost" id="refreshPicks">Refresh now</button>
+      <p class="note" id="readStatus" style="margin:9px 0 0"></p>
+      <div id="entrants" style="margin-top:14px"></div>
+      <div style="height:18px"></div>
+      <h2>Someone who only posted in the chat</h2>
+      <p class="note">For anyone whose card never reached the sheet. Paste what they posted — the sheet still wins for everybody it knows, so this only fills the gaps.</p>
       <textarea id="pasteBox" placeholder="Paste the messages from Telegram here"></textarea>
       <div style="height:10px"></div>
-      <button class="btn" id="parseBtn">Read the picks</button>
-      <div id="entrants" style="margin-top:14px"></div>
+      <button class="btn ghost" id="parseBtn">Read the picks</button>
     </section>
 
     <section class="panel">
@@ -541,7 +544,10 @@ function buildFromSlate(weekNo){
 /* ---------------- state ---------------- */
 var card = null, picks = {};
 var grades = {};           // gameIndex -> "a" | "h" | "push"
-var entries = [];          // {name, picks:[]}
+var entries = [];          // what gets rendered: the sheet, plus anyone only in the chat
+var sheetEntries = [];     // straight from the sheet, replaced on every read
+var pasted = [];           // read out of the chat, kept here because the sheet never saw them
+var lastRead = 0, refreshing = false, pollTimer = null;
 var cardKey = "";
 
 function cardParam(){
@@ -940,12 +946,100 @@ function parsePaste(raw){
   }).filter(function(p){ return p.count > 0; });
 }
 
+/* The sheet holds the picks people actually turned in, so it wins on every
+   name it knows. Anything pasted out of the chat fills in around it. */
+function rebuildEntries(){
+  var known = {};
+  sheetEntries.forEach(function(e){ known[norm(e.name)] = 1; });
+  entries = sheetEntries.concat(pasted.filter(function(p){ return !known[norm(p.name)]; }));
+}
+
+function rowToEntry(row, gs, fromSheet){
+  var chosen = [], unknown = [];
+  (row.picks || []).forEach(function(tk, i){
+    if (i >= gs.length) return;
+    var side = matchSide(tk, gs[i]);
+    if (side) chosen[i] = side; else unknown.push(tk);
+  });
+  return { name: String(row.name || "Someone").slice(0,24), picks: chosen, unknown: unknown,
+           count: chosen.filter(Boolean).length, flag: String(row.flag || ""), fromSheet: !!fromSheet };
+}
+
+function readAgo(){
+  if (!lastRead) return "";
+  var secs = Math.round((Date.now() - lastRead) / 1000);
+  if (secs < 10) return "just now";
+  if (secs < 90) return secs + "s ago";
+  return Math.round(secs / 60) + " min ago";
+}
+function setReadStatus(msg){
+  var n = $("readStatus"); if (!n) return;
+  n.textContent = msg || (lastRead
+    ? entries.length + " in, read " + readAgo() + "."
+    : "Nothing read yet.");
+}
+
+/* One read, one answer. Everything on this screen renders from it. */
+function refreshEntries(quiet){
+  var url = endpoint(), gs = liveGames();
+  if (!url || !gs.length || refreshing){
+    rebuildEntries(); renderEntrants(); renderBoard();
+    return Promise.resolve(false);
+  }
+  refreshing = true;
+  if (!quiet) setReadStatus("Reading the sheet…");
+  return fetch(url + (url.indexOf("?")>-1 ? "&" : "?") + "week=" + encodeURIComponent(card.week || ""),
+               { cache:"no-store" })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      if (!res || !res.entries) throw new Error("bad shape");
+      refreshing = false;
+      sheetEntries = res.entries.map(function(row){ return rowToEntry(row, gs, true); })
+                                .filter(function(e){ return e.count > 0; });
+      lastRead = Date.now();
+      rebuildEntries(); saveRound();
+      renderEntrants(); renderBoard(); setReadStatus();
+      return true;
+    })
+    .catch(function(){
+      refreshing = false;
+      setReadStatus(lastRead
+        ? "Couldn't reach the sheet — showing what it said " + readAgo() + "."
+        : "Couldn't reach the sheet.");
+      return false;
+    });
+}
+
+function startPolling(){
+  stopPolling();
+  pollTimer = setInterval(function(){
+    if (document.hidden) return;
+    if ($("view-commish").classList.contains("hide")) return;
+    refreshEntries(true);
+  }, 45000);
+}
+function stopPolling(){ if (pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
+
+/* Browsers throttle long timers in a tab nobody is looking at, so coming back
+   to the tab is treated as a reason to read again — which is exactly when the
+   commissioner returns from the group chat. */
+function refreshOnReturn(){
+  if ($("view-commish").classList.contains("hide")) return;
+  if (Date.now() - lastRead < 10000) return;
+  refreshEntries(true);
+}
+document.addEventListener("visibilitychange", function(){ if (!document.hidden) refreshOnReturn(); });
+window.addEventListener("focus", refreshOnReturn);
+
+// picks read out of the chat, for anyone who never turned a card in
 function mergeEntries(list){
   list.forEach(function(nw){
-    var i = entries.findIndex(function(e){ return norm(e.name) === norm(nw.name); });
-    if (i > -1) entries[i] = nw; else entries.push(nw);
+    nw.fromSheet = false;
+    var i = -1;
+    pasted.forEach(function(e, j){ if (norm(e.name) === norm(nw.name)) i = j; });
+    if (i > -1) pasted[i] = nw; else pasted.push(nw);
   });
-  saveRound();
+  rebuildEntries(); saveRound();
 }
 
 /* ---------------- COMMISH: editor ---------------- */
@@ -1016,10 +1110,20 @@ function renderEntrants(){
     var head = el("div"); 
     head.appendChild(el("strong",null,e.name));
     head.appendChild(el("span","chip", e.count + "/" + gs.length + " picks"));
+    if (e.flag) head.appendChild(el("span","chip bad","different card"));
     (e.unknown||[]).forEach(function(u){ head.appendChild(el("span","chip bad","? " + u)); });
-    var rm = el("button","clr"," remove"); rm.type="button"; rm.style.cssText="background:none;border:0;color:#A8322A;font-size:12px;cursor:pointer;text-decoration:underline;margin-left:6px";
-    rm.addEventListener("click", function(){ entries.splice(i,1); saveRound(); renderEntrants(); renderBoard(); });
-    head.appendChild(rm);
+    if (e.fromSheet){
+      head.appendChild(el("span","chip","from the sheet"));
+    } else {
+      head.appendChild(el("span","chip","from the chat"));
+      var rm = el("button","clr"," remove"); rm.type="button"; rm.style.cssText="background:none;border:0;color:#A8322A;font-size:12px;cursor:pointer;text-decoration:underline;margin-left:6px";
+      rm.addEventListener("click", function(){
+        var nm = e.name;
+        pasted = pasted.filter(function(x){ return norm(x.name) !== norm(nm); });
+        rebuildEntries(); saveRound(); renderEntrants(); renderBoard();
+      });
+      head.appendChild(rm);
+    }
     row.appendChild(head);
     box.appendChild(row);
   });
@@ -1195,14 +1299,21 @@ function renderSeason(season){
 
 /* ---------------- round persistence ---------------- */
 function saveRound(){
-  lsSet(cardKey, JSON.stringify({ entries: entries, grades: grades }));
+  lsSet(cardKey, JSON.stringify({ pasted: pasted, grades: grades, sheet: sheetEntries, at: lastRead }));
 }
 function loadRound(){
   cardKey = keyForCard();
+  sheetEntries = []; pasted = []; grades = {}; lastRead = 0;
   try{
     var r = JSON.parse(lsGet(cardKey) || "null");
-    if (r){ entries = r.entries || []; grades = r.grades || {}; }
+    if (r){
+      grades = r.grades || {};
+      pasted = r.pasted || r.entries || [];   // rounds saved before the split kept everything together
+      sheetEntries = r.sheet || [];           // last thing the sheet said, so an offline open isn't blank
+      lastRead = r.at || 0;
+    }
   }catch(e){}
+  rebuildEntries();
 }
 
 /* ---------------- view switching ---------------- */
@@ -1215,8 +1326,10 @@ function show(which){
     $("cDue").value = card.due || "";
     $("cEp").value = endpoint();
     commitCard();
-    renderEntrants(); renderSeason(null);
+    renderEntrants(); setReadStatus(); renderSeason(null);
+    refreshEntries(false); startPolling();
   } else {
+    stopPolling();
     renderPicks();
   }
 }
@@ -1322,30 +1435,11 @@ $("cEp").addEventListener("input", function(){
   renderPicks();
 });
 
-$("pullSheet").addEventListener("click", function(){
-  var url = endpoint();
-  if (!url){ toast("No web app URL set"); return; }
-  var gs = liveGames();
-  toast("Checking the sheet…");
-  fetch(url + (url.indexOf("?")>-1 ? "&" : "?") + "week=" + encodeURIComponent(card.week||""))
-    .then(function(r){ return r.json(); })
-    .then(function(res){
-      if (!res || !res.entries) throw new Error("bad shape");
-      var found = res.entries.map(function(row){
-        var chosen = [], unknown = [];
-        (row.picks||[]).forEach(function(tk, i){
-          if (i >= gs.length) return;
-          var side = matchSide(tk, gs[i]);
-          if (side) chosen[i] = side; else unknown.push(tk);
-        });
-        return { name:String(row.name||"Someone").slice(0,24), picks:chosen,
-                 unknown:unknown, count:chosen.filter(Boolean).length };
-      }).filter(function(p){ return p.count > 0; });
-      if (!found.length){ toast("Sheet's empty for this card"); return; }
-      mergeEntries(found); renderEntrants(); renderBoard();
-      toast("Pulled " + found.length + " " + (found.length===1?"entry":"entries"));
-    })
-    .catch(function(){ toast("Couldn't read the sheet from here"); });
+$("refreshPicks").addEventListener("click", function(){
+  if (!endpoint()){ toast("No web app URL set"); return; }
+  refreshEntries(false).then(function(ok){
+    toast(ok ? (sheetEntries.length + " in the sheet") : "Couldn't read the sheet from here");
+  });
 });
 
 $("submitSheet").addEventListener("click", submitToSheet);
@@ -1433,8 +1527,15 @@ $("parseBtn").addEventListener("click", function(){
 });
 
 $("saveWeek").addEventListener("click", function(){
+  var graded = Object.keys(grades).length;
+  if (!graded){ toast("Grade the card first"); return; }
+  // whatever came in since the screen was last read counts too
+  refreshEntries(true).then(bankWeek);
+});
+
+function bankWeek(){
   var gs = liveGames(), graded = Object.keys(grades).length;
-  if (!entries.length || !graded){ toast("Grade the card first"); return; }
+  if (!entries.length){ toast("Nobody's picks to bank"); return; }
   var s = getSeason();
   var label = card.week || ("Card " + (Object.keys(s).length + 1));
 
@@ -1458,7 +1559,7 @@ $("saveWeek").addEventListener("click", function(){
       renderSeason(localSeason());
       toast("Banked here — the sheet wouldn't take it, so it may still be on the old script");
     });
-});
+}
 $("exportSeason").addEventListener("click", function(){
   copyText(JSON.stringify(getSeason()), "Ledger copied");
 });
