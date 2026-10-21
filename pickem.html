@@ -394,7 +394,7 @@ function endpoint(){ return (lsGet(EP_KEY) || DEFAULT_EP || "").trim(); }
 
 // card -> compact string: week ~ due ~ (unused) | away~home~fav(a|h)~spread~kick | ...
 function encodeCard(c){
-  var head = [c.week||"", c.due||"", "", ""]
+  var head = [c.week||"", packDue(c.due), "", ""]
     .map(function(f){ return String(f).replace(/[~|]/g,"-"); }).join("~");
   var rows = (c.games||[]).map(function(g){
     return [g.away||"", g.home||"", g.fav||"h", (g.spread===""||g.spread==null)?"":g.spread, packKick(g.kick)]
@@ -407,7 +407,7 @@ function decodeCard(s){
     var parts = b64urlDecode(s).split("|");
     var head = parts.shift().split("~");
     return {
-      week: head[0]||"", due: head[1]||"",
+      week: head[0]||"", due: unpackDue(head[1]),
       games: parts.filter(Boolean).map(function(r){
         var f = r.split("~");
         return { away:f[0]||"", home:f[1]||"", fav:(f[2]==="a"?"a":"h"), spread:f[3]||"", kick:unpackKick(f[4]) };
@@ -438,12 +438,35 @@ function kickLabel(iso){
              hour:"numeric", minute:"2-digit" }).replace(",", "") + " ET";
   }catch(e){ return ""; }
 }
-function dueLocal(iso){
+/* A deadline is one moment in time, not a time of day. Stored as an absolute
+   instant and shown to each player in their own clock, so a card closes for
+   everybody at once no matter where they are. */
+function dueAbsolute(iso){
   var d = new Date(iso);
+  return isNaN(d.getTime()) ? "" : d.toISOString();
+}
+function dueToInput(due){           // absolute -> what the datetime-local box shows
+  var d = new Date(due);
   if (isNaN(d.getTime())) return "";
   function pad(n){ return (n<10?"0":"") + n; }
   return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) +
          "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+}
+function inputToDue(v){             // the box holds the commissioner's own clock
+  var d = new Date(String(v || ""));
+  return isNaN(d.getTime()) ? "" : d.toISOString();
+}
+function packDue(due){
+  var d = new Date(due);
+  return isNaN(d.getTime()) ? "" : "t" + d.getTime().toString(36);
+}
+function unpackDue(v){
+  v = String(v || "");
+  if (/^t[0-9a-z]+$/i.test(v)){
+    var ms = parseInt(v.slice(1), 36);
+    return isFinite(ms) ? new Date(ms).toISOString() : "";
+  }
+  return v;   // a link sent before this change carried a bare wall clock; leave it as it was
 }
 function sideOf(comp, which){
   var a = comp.competitors || [];
@@ -532,7 +555,7 @@ function buildFromSlate(weekNo){
       var wk = (d.week && d.week.number) || weekNo || null;
       return {
         week: wk ? ("Week " + wk) : "The Card",
-        due: picked[0] ? dueLocal(picked[0].date) : "",
+        due: picked[0] ? dueAbsolute(picked[0].date) : "",
         auto: true, weekNo: wk,
         games: picked.map(function(g){
           return { away:g.away, home:g.home, fav:g.fav, spread:g.spread, kick:g.kick };
@@ -612,7 +635,8 @@ function renderPicks(){
     var due = new Date(card.due);
     if (!isNaN(due)){
       locked = Date.now() > due.getTime();
-      stamp.textContent = locked ? "Picks closed" : "Due " + due.toLocaleString([], {weekday:"short", hour:"numeric", minute:"2-digit"});
+      stamp.textContent = locked ? "Picks closed" : "Due " + due.toLocaleString([],
+        { weekday:"short", hour:"numeric", minute:"2-digit", timeZoneName:"short" });
       stamp.classList.toggle("late", locked);
     } else stamp.textContent = "";
   } else stamp.textContent = "";
@@ -1323,7 +1347,7 @@ function show(which){
   window.scrollTo(0,0);
   if (which === "commish"){
     $("cWeek").value = card.week || "";
-    $("cDue").value = card.due || "";
+    $("cDue").value = dueToInput(card.due);
     $("cEp").value = endpoint();
     commitCard();
     renderEntrants(); setReadStatus(); renderSeason(null);
@@ -1427,7 +1451,7 @@ $("lockCommish").addEventListener("click", function(){
 
 function handEdited(){ card.auto = false; }
 $("cWeek").addEventListener("input", function(){ card.week = $("cWeek").value; handEdited(); commitCard(true); });
-$("cDue").addEventListener("input", function(){ card.due = $("cDue").value; handEdited(); commitCard(true); });
+$("cDue").addEventListener("input", function(){ card.due = inputToDue($("cDue").value); handEdited(); commitCard(true); });
 $("cEp").addEventListener("input", function(){
   var v = $("cEp").value.trim();
   // blank falls back to the one built into the page
